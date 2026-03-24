@@ -1,0 +1,21 @@
+{
+    "calc": {
+        "command": "calc.exe",
+        "description": "Open Windows Calculator"
+    },
+    "echo": {
+        "command": "echo {{msg}}",
+        "params": ["msg"],
+        "description": "Echo a message"
+    },
+    "thumb-image": {
+        "command": "magick {{input}} -thumbnail \"{{resolution}}>\" {{output}}",
+        "params": ["input", "output", "resolution"],
+        "description": "Generate image thumbnail"
+    },
+    "thumb-pdf": {
+        "command": "magick {{input}}[0] -thumbnail \"{{resolution}}>\" {{output}}",
+        "params": ["input", "output", "resolution"],
+        "description": "Generate PDF first-page thumbnail as PNG"
+    }
+}

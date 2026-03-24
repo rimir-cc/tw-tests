@@ -1,0 +1,30 @@
+{
+    "description": "Playwright test edition — all rimir plugins loaded",
+    "plugins": [
+        "tiddlywiki/tiddlyweb",
+        "tiddlywiki/filesystem",
+        "rimir/components",
+        "rimir/core-hook",
+        "rimir/doc-template",
+        "rimir/explide",
+        "rimir/ext-connect",
+        "rimir/file-upload",
+        "rimir/filesystem-watcher",
+        "rimir/git-int",
+        "rimir/json-dsl",
+        "rimir/llm-connect",
+        "rimir/minver",
+        "rimir/orga",
+        "rimir/orga-tools",
+        "rimir/realms",
+        "rimir/runner",
+        "rimir/theme",
+        "rimir/typed",
+        "rimir/statewrap",
+        "rimir/appify"
+    ],
+    "themes": [
+        "tiddlywiki/vanilla",
+        "tiddlywiki/snowwhite"
+    ]
+}
