@@ -1,3 +1,10 @@
+# Dependencies
+node_modules/
+
 # Test artifact tiddlers (generated during test runs)
 pw-edition/tiddlers/
 test-edition/tiddlers/
+
+# Playwright output
+test-results/
+playwright-report/
