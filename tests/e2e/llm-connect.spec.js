@@ -193,4 +193,208 @@ test.describe("llm-connect plugin", () => {
 
 		await deleteTiddlerFromBrowser(page, "LlmChatTest");
 	});
+
+	// === v0.1.18-v0.1.24 tests ===
+
+	test("accessible tiddlers panel toggles on eye button click", async ({ page }) => {
+		await createTiddlerInBrowser(page, "LlmChatTest", {
+			text: '<$llm-chat/>',
+		});
+		await navigateToTiddler(page, "LlmChatTest");
+
+		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+
+		// Panel should be hidden initially
+		await expect(frame.locator(".llm-chat-access-panel")).not.toBeVisible();
+
+		// Click eye button to show
+		await frame.locator(".llm-chat-btn-access").click();
+		await expect(frame.locator(".llm-chat-access-panel")).toBeVisible();
+		await expect(frame.locator(".llm-chat-access-title")).toBeVisible();
+
+		// Click again to hide
+		await frame.locator(".llm-chat-btn-access").click();
+		await expect(frame.locator(".llm-chat-access-panel")).not.toBeVisible();
+
+		await deleteTiddlerFromBrowser(page, "LlmChatTest");
+	});
+
+	test("pin button exists in chat panel header", async ({ page }) => {
+		// Open the chat panel via state tiddler
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "yes" });
+		});
+		await page.waitForSelector(".llm-chat-panel");
+
+		const panel = page.locator(".llm-chat-panel");
+		await expect(panel.locator(".llm-chat-btn-pin")).toBeVisible();
+
+		// Close panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "no" });
+		});
+	});
+
+	test("pin button creates saved chat tiddler", async ({ page }) => {
+		// Open the chat panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "yes" });
+		});
+		await page.waitForSelector(".llm-chat-panel");
+
+		const panel = page.locator(".llm-chat-panel");
+
+		// Click pin button
+		await panel.locator(".llm-chat-btn-pin").click();
+
+		// Verify a saved chat tiddler was created with llm-pinned-save field
+		const pinned = await page.evaluate(() => {
+			var chatTid = $tw.wiki.getTiddler("$:/temp/rimir/llm-connect/toolbar-chat");
+			return chatTid ? chatTid.fields["llm-pinned-save"] : null;
+		});
+		expect(pinned).toBe("yes");
+
+		// Verify pin button has active class
+		await expect(panel.locator(".llm-chat-btn-pin.llm-chat-btn-pin-active")).toBeVisible();
+
+		// Close panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "no" });
+		});
+	});
+
+	test("unpin button clears pinned state", async ({ page }) => {
+		// Open the chat panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "yes" });
+		});
+		await page.waitForSelector(".llm-chat-panel");
+
+		const panel = page.locator(".llm-chat-panel");
+
+		// Pin first
+		await panel.locator(".llm-chat-btn-pin").click();
+		await expect(panel.locator(".llm-chat-btn-pin.llm-chat-btn-pin-active")).toBeVisible();
+
+		// Click again to unpin
+		await panel.locator(".llm-chat-btn-pin").click();
+
+		// Verify llm-pinned-save is cleared
+		const pinned = await page.evaluate(() => {
+			var chatTid = $tw.wiki.getTiddler("$:/temp/rimir/llm-connect/toolbar-chat");
+			return chatTid ? (chatTid.fields["llm-pinned-save"] || "") : "";
+		});
+		expect(pinned).toBe("");
+
+		// Verify pin button no longer has active class
+		await expect(panel.locator(".llm-chat-btn-pin.llm-chat-btn-pin-active")).not.toBeVisible();
+
+		// Close panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "no" });
+		});
+	});
+
+	test("switching protection mode negates the filter", async ({ page }) => {
+		await createTiddlerInBrowser(page, "LlmChatTest", {
+			text: '<$llm-chat chatTiddler="$:/temp/llm-negate-test"/>',
+		});
+		await navigateToTiddler(page, "LlmChatTest");
+
+		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+
+		// Open protection panel
+		await frame.locator(".llm-chat-btn-shield").click();
+		await expect(frame.locator(".llm-chat-protection-row")).toBeVisible();
+
+		// Ensure mode is "allow" and type a filter
+		const modeSelect = frame.locator(".llm-chat-protection-mode-select");
+		await modeSelect.selectOption("allow");
+		const filterInput = frame.locator(".llm-chat-protection-input");
+		await filterInput.fill("[[Foo]] [tag[bar]]");
+		// Trigger change event so it saves
+		await filterInput.dispatchEvent("change");
+
+		// Switch to deny mode
+		await modeSelect.selectOption("deny");
+
+		// Verify input now shows negated filter
+		const denyValue = await filterInput.inputValue();
+		expect(denyValue).toContain("-[[Foo]]");
+		expect(denyValue).toContain("-[tag[bar]]");
+
+		// Switch back to allow
+		await modeSelect.selectOption("allow");
+
+		// Verify input shows un-negated filter
+		const allowValue = await filterInput.inputValue();
+		expect(allowValue).toContain("[[Foo]]");
+		expect(allowValue).toContain("[tag[bar]]");
+		expect(allowValue).not.toContain("-[[Foo]]");
+
+		await deleteTiddlerFromBrowser(page, "LlmChatTest");
+		await deleteTiddlerFromBrowser(page, "$:/temp/llm-negate-test");
+	});
+
+	test("create_tiddler tool schema includes basetitle parameter", async ({ page }) => {
+		const schema = await page.evaluate(() => {
+			var tid = $tw.wiki.getTiddler("$:/plugins/rimir/llm-connect/tools/create-tiddler");
+			return tid ? JSON.parse(tid.fields["tool-schema"]) : null;
+		});
+		expect(schema).not.toBeNull();
+		expect(schema.properties).toHaveProperty("basetitle");
+		expect(schema.properties.basetitle.type).toBe("string");
+	});
+
+	test("creation rules config tiddler exists", async ({ page }) => {
+		const exists = await page.evaluate(() => {
+			return $tw.wiki.tiddlerExists("$:/config/rimir/llm-connect/creation-rules") ||
+				$tw.wiki.isShadowTiddler("$:/config/rimir/llm-connect/creation-rules");
+		});
+		expect(exists).toBe(true);
+	});
+
+	test("protection mode select has allow and deny options", async ({ page }) => {
+		await createTiddlerInBrowser(page, "LlmChatTest", {
+			text: '<$llm-chat/>',
+		});
+		await navigateToTiddler(page, "LlmChatTest");
+
+		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+
+		// Open protection panel
+		await frame.locator(".llm-chat-btn-shield").click();
+		await expect(frame.locator(".llm-chat-protection-row")).toBeVisible();
+
+		// Verify select exists with both options
+		const modeSelect = frame.locator(".llm-chat-protection-mode-select");
+		await expect(modeSelect).toBeVisible();
+
+		const options = modeSelect.locator("option");
+		await expect(options).toHaveCount(2);
+
+		const values = await options.evaluateAll(opts => opts.map(o => o.value));
+		expect(values).toContain("allow");
+		expect(values).toContain("deny");
+
+		await deleteTiddlerFromBrowser(page, "LlmChatTest");
+	});
+
+	test("pin context menu element exists in chat panel", async ({ page }) => {
+		// Open the chat panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "yes" });
+		});
+		await page.waitForSelector(".llm-chat-panel");
+
+		const panel = page.locator(".llm-chat-panel");
+		// The pin menu div is rendered in the template (hidden by default)
+		const pinMenu = panel.locator(".llm-chat-pin-menu");
+		await expect(pinMenu).toHaveCount(1);
+
+		// Close panel
+		await page.evaluate(() => {
+			$tw.wiki.addTiddler({ title: "$:/state/rimir/llm-connect/chat-open", text: "no" });
+		});
+	});
 });
