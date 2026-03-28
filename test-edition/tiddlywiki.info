@@ -4,6 +4,7 @@
         "tiddlywiki/jasmine",
         "rimir/components",
         "rimir/core-hook",
+        "rimir/diffsync",
         "rimir/doc-template",
         "rimir/explide",
         "rimir/ext-connect",

@@ -13,6 +13,7 @@
         "rimir/git-int",
         "rimir/json-dsl",
         "rimir/llm-connect",
+        "rimir/llm-help",
         "rimir/minver",
         "rimir/orga",
         "rimir/orga-tools",
@@ -21,7 +22,8 @@
         "rimir/theme",
         "rimir/typed",
         "rimir/statewrap",
-        "rimir/appify"
+        "rimir/appify",
+        "rimir/diffsync"
     ],
     "themes": [
         "tiddlywiki/vanilla",
