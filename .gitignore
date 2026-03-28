@@ -3,7 +3,9 @@ node_modules/
 
 # Test artifact tiddlers (generated during test runs)
 pw-edition/tiddlers/
-test-edition/tiddlers/
+test-edition/tiddlers/*
+# But track hand-written test specs in test-edition
+!test-edition/tiddlers/test-*.js
 
 # Playwright output
 test-results/
