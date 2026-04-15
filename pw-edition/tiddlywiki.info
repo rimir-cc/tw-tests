@@ -15,6 +15,7 @@
         "rimir/llm-connect",
         "rimir/llm-help",
         "rimir/minver",
+        "rimir/namespace",
         "rimir/orga",
         "rimir/orga-tools",
         "rimir/realms",
