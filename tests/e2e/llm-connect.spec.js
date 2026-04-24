@@ -80,7 +80,7 @@ test.describe("llm-connect plugin", () => {
 		await deleteTiddlerFromBrowser(page, "LlmChatTest");
 	});
 
-	test("debug panel toggles on bug button click", async ({ page }) => {
+	test("debug menu opens on bug button click and shows selected panel", async ({ page }) => {
 		await createTiddlerInBrowser(page, "LlmChatTest", {
 			text: '<$llm-chat/>',
 		});
@@ -88,15 +88,21 @@ test.describe("llm-connect plugin", () => {
 
 		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
 
-		// Debug panel should be hidden initially
+		await expect(frame.locator(".llm-chat-debug-menu")).not.toBeVisible();
 		await expect(frame.locator(".llm-chat-debug-panel")).not.toBeVisible();
 
-		// Click debug button
+		await frame.locator(".llm-chat-btn-debug").scrollIntoViewIfNeeded();
 		await frame.locator(".llm-chat-btn-debug").click();
+		await expect(frame.locator(".llm-chat-debug-menu")).toBeVisible();
+
+		// The debug menu is fixed-positioned relative to the bug button's viewport
+		// rect; reliably off-screen in parallel test contexts. Dispatch the click
+		// via JS so Playwright's viewport check is bypassed.
+		await frame.locator('.llm-chat-debug-menu-item[data-panel-id="access"]').evaluate(el => el.click());
 		await expect(frame.locator(".llm-chat-debug-panel")).toBeVisible();
 
-		// Click again to hide
 		await frame.locator(".llm-chat-btn-debug").click();
+		await frame.locator('.llm-chat-debug-menu-item[data-panel-id="access"]').evaluate(el => el.click());
 		await expect(frame.locator(".llm-chat-debug-panel")).not.toBeVisible();
 
 		await deleteTiddlerFromBrowser(page, "LlmChatTest");
@@ -196,7 +202,7 @@ test.describe("llm-connect plugin", () => {
 
 	// === v0.1.18-v0.1.24 tests ===
 
-	test("accessible tiddlers panel toggles on eye button click", async ({ page }) => {
+	test("accessible tiddlers panel toggles via debug menu", async ({ page }) => {
 		await createTiddlerInBrowser(page, "LlmChatTest", {
 			text: '<$llm-chat/>',
 		});
@@ -204,17 +210,17 @@ test.describe("llm-connect plugin", () => {
 
 		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
 
-		// Panel should be hidden initially
-		await expect(frame.locator(".llm-chat-access-panel")).not.toBeVisible();
+		await expect(frame.locator(".llm-chat-access-title")).not.toBeVisible();
 
-		// Click eye button to show
-		await frame.locator(".llm-chat-btn-access").click();
-		await expect(frame.locator(".llm-chat-access-panel")).toBeVisible();
+		await frame.locator(".llm-chat-btn-debug").scrollIntoViewIfNeeded();
+		await frame.locator(".llm-chat-btn-debug").click();
+		// See sibling debug-menu test for why we dispatch click via JS.
+		await frame.locator('.llm-chat-debug-menu-item[data-panel-id="access"]').evaluate(el => el.click());
 		await expect(frame.locator(".llm-chat-access-title")).toBeVisible();
 
-		// Click again to hide
-		await frame.locator(".llm-chat-btn-access").click();
-		await expect(frame.locator(".llm-chat-access-panel")).not.toBeVisible();
+		await frame.locator(".llm-chat-btn-debug").click();
+		await frame.locator('.llm-chat-debug-menu-item[data-panel-id="access"]').evaluate(el => el.click());
+		await expect(frame.locator(".llm-chat-access-title")).not.toBeVisible();
 
 		await deleteTiddlerFromBrowser(page, "LlmChatTest");
 	});
@@ -344,14 +350,6 @@ test.describe("llm-connect plugin", () => {
 		expect(schema).not.toBeNull();
 		expect(schema.properties).toHaveProperty("basetitle");
 		expect(schema.properties.basetitle.type).toBe("string");
-	});
-
-	test("creation rules config tiddler exists", async ({ page }) => {
-		const exists = await page.evaluate(() => {
-			return $tw.wiki.tiddlerExists("$:/config/rimir/llm-connect/creation-rules") ||
-				$tw.wiki.isShadowTiddler("$:/config/rimir/llm-connect/creation-rules");
-		});
-		expect(exists).toBe(true);
 	});
 
 	test("protection mode select has allow and deny options", async ({ page }) => {

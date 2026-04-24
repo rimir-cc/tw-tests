@@ -1,22 +1,22 @@
 const { test, expect } = require("@playwright/test");
 const { waitForTW, navigateToTiddler, createTiddlerInBrowser, deleteTiddlerFromBrowser } = require("./helpers");
 
-test.describe("orga + orga-tools plugins", () => {
+test.describe("orga-data-model + orga-tools plugins", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
 		await waitForTW(page);
 	});
 
-	test("orga plugin is loaded and has type definitions", async ({ page }) => {
+	test("orga-data-model plugin is loaded and has type definitions", async ({ page }) => {
 		const typeCount = await page.evaluate(() => {
-			return $tw.wiki.filterTiddlers("[all[shadows+tiddlers]prefix[$:/plugins/rimir/orga/typed/types/]]").length;
+			return $tw.wiki.filterTiddlers("[all[shadows+tiddlers]prefix[$:/plugins/rimir/orga-data-model/typed/types/]]").length;
 		});
 		expect(typeCount).toBeGreaterThan(0);
 	});
 
 	test("orga field definitions are loaded", async ({ page }) => {
 		const fieldCount = await page.evaluate(() => {
-			return $tw.wiki.filterTiddlers("[all[shadows+tiddlers]prefix[$:/plugins/rimir/orga/typed/fields/]]").length;
+			return $tw.wiki.filterTiddlers("[all[shadows+tiddlers]prefix[$:/plugins/rimir/orga-data-model/typed/fields/]]").length;
 		});
 		expect(fieldCount).toBeGreaterThan(0);
 	});
@@ -25,10 +25,13 @@ test.describe("orga + orga-tools plugins", () => {
 		await navigateToTiddler(page, "$:/plugins/rimir/typed/spawner");
 
 		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="$:/plugins/rimir/typed/spawner"]');
-		const select = frame.locator("select").first();
-		const optionTexts = await select.locator("option").allInnerTexts();
+		// Spawner has two selects: Model (first) and Type (second). Types
+		// like project/task/team/person live in the Type dropdown. Options
+		// aren't "visible" (collapsed select), so wait for attachment.
+		const typeSelect = frame.locator("select").nth(1);
+		await typeSelect.locator("option").first().waitFor({ state: "attached" });
+		const optionTexts = await typeSelect.locator("option").allInnerTexts();
 
-		// Should contain at least some orga types
 		const orgaTypes = optionTexts.filter((t) => /project|task|team|person/i.test(t));
 		expect(orgaTypes.length).toBeGreaterThan(0);
 	});

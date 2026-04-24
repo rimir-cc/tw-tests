@@ -30,12 +30,15 @@ test.describe("minver plugin", () => {
 		await createTiddler(request, TIDDLER, { text: "Initial content", tags: "test" });
 		await page.goto("/");
 		await waitForTW(page);
-		// Discard any leftover drafts
+		// Discard any leftover drafts + dismiss any alert overlays that
+		// other specs (e.g. filesystem-watcher) may have left in the
+		// server-side wiki and synced into this browser context.
 		await page.evaluate((title) => {
 			const draftTitle = $tw.wiki.findDraft(title);
 			if (draftTitle) $tw.wiki.deleteTiddler(draftTitle);
-			// Clear story list
 			$tw.wiki.addTiddler({ title: "$:/StoryList", text: "", list: "" });
+			const alerts = $tw.wiki.filterTiddlers("[tag[$:/tags/Alert]]");
+			alerts.forEach(t => $tw.wiki.deleteTiddler(t));
 		}, TIDDLER);
 		// Clear minver localStorage
 		await page.evaluate(() => {

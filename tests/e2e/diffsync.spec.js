@@ -360,6 +360,7 @@ test.describe("diffsync multiline hunks", () => {
 		);
 		// Verify context lines (equal type) appear around the change
 		const equalLines = panel.locator(".ds-line-equal");
+		await expect(equalLines.first()).toBeVisible();
 		const equalCount = await equalLines.count();
 		expect(equalCount).toBeGreaterThan(0);
 

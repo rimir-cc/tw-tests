@@ -28,6 +28,7 @@ test.describe("ext-connect plugin", () => {
 
 		const content = cp.locator(".rr-settings-content");
 		const tabs = content.locator(".rr-tab");
+		await expect(tabs.first()).toBeVisible();
 		const count = await tabs.count();
 		expect(count).toBeGreaterThan(1);
 	});

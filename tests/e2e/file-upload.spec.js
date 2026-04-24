@@ -35,6 +35,10 @@ test.describe("file-upload plugin", () => {
 
 		const content = cp.locator(".rr-settings-content");
 		const checkboxes = content.locator("input[type='checkbox']");
+		// TW styles checkboxes so the <input> element is visually hidden (a
+		// sibling label provides the styled affordance). Wait for attachment,
+		// not visibility.
+		await checkboxes.first().waitFor({ state: "attached" });
 		const count = await checkboxes.count();
 		expect(count).toBeGreaterThan(0);
 	});

@@ -54,6 +54,7 @@ test.describe("doc-template plugin", () => {
 
 		// Should have multiple tabs
 		const tabs = hub.locator(".rdt-tab");
+		await expect(tabs.first()).toBeVisible();
 		const tabCount = await tabs.count();
 		expect(tabCount).toBeGreaterThan(1);
 

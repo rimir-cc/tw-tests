@@ -44,6 +44,7 @@ test.describe("realms plugin", () => {
 
 		// Should have realm rows and buttons within them
 		const rows = content.locator(".rlm-row");
+		await expect(rows.first()).toBeVisible();
 		const count = await rows.count();
 		expect(count).toBeGreaterThan(0);
 	});

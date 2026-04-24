@@ -43,10 +43,14 @@ test.describe("filesystem-watcher plugin", () => {
 		fs.writeFileSync(filepath, "title: FswTestTiddler\n\nCreated by Playwright test");
 
 		try {
-			// Wait for watcher to detect + syncer to poll (up to 6s)
+			// Wait for watcher to detect + syncer to poll + text to populate
+			// (tiddler metadata can arrive a tick before text — wait for both)
 			await page.waitForFunction(
-				() => !!$tw.wiki.getTiddler("FswTestTiddler"),
-				{ timeout: 8000 },
+				() => {
+					var t = $tw.wiki.getTiddler("FswTestTiddler");
+					return t && t.fields.text === "Created by Playwright test";
+				},
+				{ timeout: 10000 },
 			);
 
 			const text = await page.evaluate(() => {

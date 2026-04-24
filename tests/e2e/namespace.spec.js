@@ -15,6 +15,14 @@ test.describe("namespace plugin", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
 		await waitForTW(page);
+		// Namespace feature flags default to "no"; enable the four the
+		// specs exercise. Setting these tiddlers triggers the plugin's
+		// change listener which invalidates the cached flag values.
+		await page.evaluate(() => {
+			["walk-up", "implicit-context", "pseudo-expansion", "aliases"].forEach(flag => {
+				$tw.wiki.addTiddler({ title: "$:/config/rimir/namespace/" + flag, text: "yes" });
+			});
+		});
 	});
 
 	test.afterEach(async ({ page }) => {

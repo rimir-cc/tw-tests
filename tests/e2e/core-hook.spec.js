@@ -32,6 +32,7 @@ test.describe("core-hook plugin", () => {
 		const sidebar = cp.locator(".rr-settings-sidebar");
 		// Should list multiple plugins
 		const items = sidebar.locator(".rr-settings-plugin-item");
+		await expect(items.first()).toBeVisible();
 		const count = await items.count();
 		expect(count).toBeGreaterThan(3);
 

@@ -261,11 +261,13 @@ test.describe("appify FAB and app switching", () => {
 		});
 		await page.waitForTimeout(300);
 
-		// Open FAB and click "Wiki (default)"
-		await page.locator(".appify-fab-btn").click();
+		// In app mode there are two FAB instances in the DOM (wiki-mode FAB
+		// hidden on <body>, app-mode FAB inside the app layout). Target the
+		// visible one explicitly.
+		await page.locator(".appify-fab-btn:visible").click();
 		await page.waitForTimeout(300);
 
-		const wikiDefault = page.locator(".appify-fab-popup .appify-fab-item", { hasText: "Wiki (default)" });
+		const wikiDefault = page.locator(".appify-fab-popup:visible .appify-fab-item", { hasText: "Wiki (default)" });
 		await wikiDefault.click();
 		await page.waitForTimeout(300);
 
@@ -337,7 +339,10 @@ test.describe("appify layout switching", () => {
 		expect(slots.found).toBe(true);
 		expect(slots.names).toContain("sidebar");
 		expect(slots.names).toContain("main");
-		expect(slots.gridStyle).toContain("grid-template-areas");
+		// The widget sets grid-template-areas as its own property, but the browser
+		// normalizes to the `grid-template` shorthand when re-serializing the style
+		// attribute. Assert on the shared payload (the area names) instead.
+		expect(slots.gridStyle).toContain("sidebar main");
 	});
 
 	test("switching layout changes grid structure", async ({ page }) => {
