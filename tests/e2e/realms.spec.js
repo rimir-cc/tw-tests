@@ -94,6 +94,13 @@ test.describe("realms plugin", () => {
 	});
 
 	test("active realm filters tiddlers from skinny list", async ({ request }) => {
+		// realms.json default has work.active=true. Explicitly start from
+		// inactive so another parallel test can't flip state under us.
+		await request.put("/api/realms", {
+			headers: { "Content-Type": "application/json", "X-Requested-With": "TiddlyWiki" },
+			data: { work: { active: false } },
+		});
+
 		// Create a tiddler matching the "work" realm filter (prefix[WorkNote])
 		await request.put("/recipes/default/tiddlers/WorkNoteTestRealm", {
 			headers: { "Content-Type": "application/json", "X-Requested-With": "TiddlyWiki" },
@@ -120,11 +127,7 @@ test.describe("realms plugin", () => {
 		titles = (await skinny.json()).map((t) => t.title);
 		expect(titles).not.toContain("WorkNoteTestRealm");
 
-		// Restore: deactivate realm and delete test tiddler
-		await request.put("/api/realms", {
-			headers: { "Content-Type": "application/json", "X-Requested-With": "TiddlyWiki" },
-			data: { work: { active: false } },
-		});
+		// Restore to realms.json baseline (active: true) and delete test tiddler
 		await request.delete("/bags/default/tiddlers/WorkNoteTestRealm", {
 			headers: { "X-Requested-With": "TiddlyWiki" },
 		}).catch(() => {});
