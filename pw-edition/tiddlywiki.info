@@ -25,7 +25,8 @@
         "rimir/typed",
         "rimir/statewrap",
         "rimir/appify",
-        "rimir/diffsync"
+        "rimir/diffsync",
+        "rimir/knowledge-app"
     ],
     "themes": [
         "tiddlywiki/vanilla",
