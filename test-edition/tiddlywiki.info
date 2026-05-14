@@ -19,6 +19,7 @@
         "rimir/minver",
         "rimir/base-data-model",
         "rimir/orga-data-model",
+        "rimir/orga-apps",
         "rimir/orga-tools",
         "rimir/realms",
         "rimir/runner",
@@ -27,7 +28,9 @@
         "rimir/statewrap",
         "rimir/appify",
         "rimir/namespace",
-        "rimir/knowledge-app"
+        "rimir/knowledge-app",
+        "rimir/mindmap",
+        "rimir/mindmap-elixir"
     ],
     "themes": [
         "tiddlywiki/vanilla",
