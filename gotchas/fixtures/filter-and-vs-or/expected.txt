@@ -1,0 +1,3 @@
+chain(AND): Both,
+runs-spaced(OR): AOnly,BOnly,Both,
+runs-nospace(OR): AOnly,BOnly,Both,

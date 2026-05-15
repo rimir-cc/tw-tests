@@ -1,0 +1,6 @@
+title: RunTest
+
+all-user-titles: <$list filter="[all[tiddlers]!is[system]sort[title]]" variable=t>[<<t>>]</$list>
+subtract-bare: <$list filter="[all[tiddlers]!is[system]] -[a/b/c] +[sort[title]]" variable=t>[<<t>>]</$list>
+subtract-double: <$list filter="[all[tiddlers]!is[system]] -[[a/b/c]] +[sort[title]]" variable=t>[<<t>>]</$list>
+subtract-indirect: <$let target="a/b/c"><$list filter="[all[tiddlers]!is[system]] -[<target>] +[sort[title]]" variable=t>[<<t>>]</$list></$let>

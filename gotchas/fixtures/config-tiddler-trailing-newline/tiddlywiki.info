@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: .tid body keeps the file's trailing newline; chain trim[] when using as operand",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

@@ -1,0 +1,6 @@
+title: RunTest
+
+single-A: [<$text text={{{[{StorageA}]}}}/>]
+double-A: [<$text text={{{[{StorageA}get[text]]}}}/>]
+single-Standalone: [<$text text={{{[{Standalone}]}}}/>]
+double-Standalone: [<$text text={{{[{Standalone}get[text]]}}}/>]

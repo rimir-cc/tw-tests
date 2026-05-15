@@ -1,0 +1,4 @@
+user-tag-skips-shadows: 1
+user-tag-with-shadows: 1
+shadow-tag-skips-shadows: 0
+shadow-tag-with-shadows: 4

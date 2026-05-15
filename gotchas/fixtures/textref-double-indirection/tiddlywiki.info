@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: [{tiddler}get[text]] is DOUBLE indirection; [{tiddler}] already returns text",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

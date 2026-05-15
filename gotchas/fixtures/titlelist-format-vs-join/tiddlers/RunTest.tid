@@ -1,0 +1,4 @@
+title: RunTest
+
+naive: <$let s={{{[tag[TestSet]sort[title]] +[join[ ]]}}}><$list filter="[enlist<s>]" variable=t><<t>>,</$list></$let>
+titlelist: <$let s={{{[tag[TestSet]sort[title]] +[format:titlelist[]join[ ]]}}}><$list filter="[enlist<s>]" variable=t><<t>>,</$list></$let>

@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: variable names with dots don't work in <v.name> filter syntax; use simple names",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

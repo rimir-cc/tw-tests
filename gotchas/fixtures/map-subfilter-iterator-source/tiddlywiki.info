@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: :map[X] subfilter source = single iteration item, not all[tiddlers]; prefix all[tiddlers] when looking up related",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

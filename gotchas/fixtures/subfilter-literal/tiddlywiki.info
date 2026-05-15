@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: literal subfilter operand with nested brackets breaks parser; use variable or tiddler indirection",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

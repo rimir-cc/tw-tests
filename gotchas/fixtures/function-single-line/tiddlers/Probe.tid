@@ -1,0 +1,9 @@
+title: Probe
+
+\function singleLine() [[X]]
+\function multiLine() [[X]]
+[[LEAKED_BODY]]
+
+call-singleLine: <$list filter="[function[singleLine]]" variable=t>[<<t>>]</$list>
+call-multiLine: <$list filter="[function[multiLine]]" variable=t>[<<t>>]</$list>
+END_OF_PROBE

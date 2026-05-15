@@ -1,0 +1,17 @@
+<p>PROPER NESTING:
+
+<div class="proper">
+inside-foo-proper
+</div>
+</p><p>STRADDLING NESTING:
+<div class="straddle">
+
+inside-bar-straddle
+&lt;/div&gt;
+
+
+AFTER STRADDLE:
+
+text-with-baz-downstream
+
+</div></p>

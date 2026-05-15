@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: adjacent filter runs are UNION, not intersection",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

@@ -1,0 +1,5 @@
+{
+    "description": "TW 5.4.0: <<v>> with $:/path value re-parses output as wikitext; renders as syslink anchor in HTML",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

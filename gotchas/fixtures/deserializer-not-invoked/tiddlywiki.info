@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: tiddlerdeserializer fires only on file load / import; wiki.addTiddler bypasses it. Route through wiki.deserializeTiddlers first",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

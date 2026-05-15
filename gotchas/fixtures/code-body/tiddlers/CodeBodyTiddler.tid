@@ -1,0 +1,5 @@
+title: CodeBodyTiddler
+code-body: yes
+
+\procedure greet() HELLO
+<<greet>>

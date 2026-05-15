@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: :filter subfilter `!has`/`!is` doesn't work; chain directly in the run",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

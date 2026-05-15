@@ -1,0 +1,5 @@
+define-with-dollar: val=HELLO
+procedure-with-dollar: val=$x$
+procedure-with-angle: val=HELLO
+function-with-dollar: $x$=HELLO
+function-with-angle: val=HELLO

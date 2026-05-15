@@ -1,0 +1,8 @@
+title: RunTest
+
+\function returnXY() [[X]] [[Y]]
+
+inside-run: <$list filter="[function[returnXY]count[]]" variable=v><<v>></$list>
+outside-with-plus: <$list filter="[function[returnXY]] +[count[]]" variable=v><<v>></$list>
+outside-no-plus: <$list filter="[function[returnXY]]count[]" variable=v><<v>></$list>
+outside-no-plus-listed: <$list filter="[function[returnXY]]count[]" variable=v>[<<v>>]</$list>

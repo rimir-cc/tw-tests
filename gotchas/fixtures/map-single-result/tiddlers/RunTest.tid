@@ -1,0 +1,5 @@
+title: RunTest
+
+map: <$list filter="[[ItemA]] [[ItemB]] :map[all[tiddlers]field:parent<currentTiddler>sort[title]]" variable=t><<t>>,</$list>
+map:flat: <$list filter="[[ItemA]] [[ItemB]] :map:flat[all[tiddlers]field:parent<currentTiddler>sort[title]]" variable=t><<t>>,</$list>
+filter-reverse: <$list filter="[all[tiddlers]has[parent]] :filter[get[parent]match[ItemA]]" variable=t><<t>>,</$list>

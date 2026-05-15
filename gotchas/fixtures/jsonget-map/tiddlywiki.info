@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: chaining jsonget twice inside :map fails silently; use jsonextract to get sub-object first",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

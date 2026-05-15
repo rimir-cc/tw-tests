@@ -1,0 +1,9 @@
+title: RunTest
+
+get-present-value: [<$list filter="[[WithMark]get[mark]]" variable=v><<v>></$list>]
+get-present-count: [<$list filter="[[WithMark]get[mark]count[]]" variable=v><<v>></$list>]
+get-missing-value: [<$list filter="[[NoMark]get[mark]]" variable=v><<v>></$list>]
+get-missing-count: [<$list filter="[[NoMark]get[mark]count[]]" variable=v><<v>></$list>]
+get-empty-value: [<$list filter="[[EmptyMark]get[mark]]" variable=v><<v>></$list>]
+get-empty-count: [<$list filter="[[EmptyMark]get[mark]count[]]" variable=v><<v>></$list>]
+chain-after-empty: [<$list filter="[[NoMark]get[mark]addprefix[X-]]" variable=v><<v>></$list>]

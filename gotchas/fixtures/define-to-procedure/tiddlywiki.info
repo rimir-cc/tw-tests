@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: \\define uses $param$ substitution; \\procedure/\\function do NOT — use <<param>> instead",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

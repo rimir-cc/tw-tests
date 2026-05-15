@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $slot/$fill names cannot contain colons (silent fail to default content)",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

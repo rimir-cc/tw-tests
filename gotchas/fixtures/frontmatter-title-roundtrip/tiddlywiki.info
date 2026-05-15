@@ -1,0 +1,8 @@
+{
+    "description": "Gotcha: rimir/frontmatter ≥0.1.4 persists title in YAML; pre-0.1.4 lost colons (filename _-translation)",
+    "plugins": [
+        "tiddlywiki/markdown",
+        "rimir/frontmatter"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

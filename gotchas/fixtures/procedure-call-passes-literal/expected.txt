@@ -1,0 +1,6 @@
+
+direct: REAL
+bare-arg: arg=myvar
+quoted-arg: arg=REAL
+inherit-no-param: arg=REAL
+

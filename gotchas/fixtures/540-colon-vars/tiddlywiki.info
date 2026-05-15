@@ -1,0 +1,5 @@
+{
+    "description": "TW 5.4.0 breaking change: <<name:value>> parses as macro arg, not variable lookup",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

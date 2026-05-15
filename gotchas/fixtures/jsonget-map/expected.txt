@@ -1,0 +1,4 @@
+indexes: [0][1][2]
+chained-jsonget: [][][]
+extract-then-get: [alice][bob][carol]
+direct-multi-arg: [alice][bob][carol]

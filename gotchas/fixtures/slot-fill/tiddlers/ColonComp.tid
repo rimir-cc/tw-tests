@@ -1,0 +1,3 @@
+title: ColonComp
+
+<$slot $name="view:sec">fallback-colon</$slot>

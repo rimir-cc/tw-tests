@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: :map returns only first subfilter result per item",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

@@ -1,0 +1,6 @@
+all: [file.md][file.txt][notes.md]
+naive-removesuffix: [file][notes]
+guard-with-filter: [file][notes]
+chained-naive-match-both: [a]
+chained-naive-match-second-only: 
+chained-naive-match-first-only: 

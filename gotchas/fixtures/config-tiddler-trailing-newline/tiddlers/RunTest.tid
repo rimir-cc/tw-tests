@@ -1,0 +1,9 @@
+title: RunTest
+
+\function divNaive() [[DividerConfig]get[text]]
+\function divTrim() [[DividerConfig]get[text]trim[]]
+
+text-length: <$list filter="[<divNaive>length[]]" variable=v><<v>></$list>
+trimmed-length: <$list filter="[<divTrim>length[]]" variable=v><<v>></$list>
+split-naive: <$list filter="[[A|B|C]split<divNaive>]" variable=t>[<<t>>]</$list>
+split-trimmed: <$list filter="[[A|B|C]split<divTrim>]" variable=t>[<<t>>]</$list>

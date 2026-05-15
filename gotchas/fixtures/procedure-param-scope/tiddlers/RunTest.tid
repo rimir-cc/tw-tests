@@ -1,0 +1,19 @@
+title: RunTest
+
+\procedure simpleParam(x) param=<<x>> filter=<$list filter="[<x>]" variable=v>[<<v>>]</$list>
+
+\procedure findInTeamParam(x)
+<$list filter="[all[tiddlers]has[team-member-of]] :filter[get[team-member-of]enlist-input[]match<x>] +[sort[title]]" variable=p>[<<p>>]</$list>
+\end
+
+\procedure findInTeamScope()
+<$list filter="[all[tiddlers]has[team-member-of]] :filter[get[team-member-of]enlist-input[]match<targetTeam>] +[sort[title]]" variable=p>[<<p>>]</$list>
+\end
+
+simple-call: <<simpleParam "T1">>
+findInTeam-via-param-T1: <<findInTeamParam "T1">>
+findInTeam-via-scope-T1: <$let targetTeam="T1"><<findInTeamScope>></$let>
+findInTeam-via-param-T2: <<findInTeamParam "T2">>
+findInTeam-via-scope-T2: <$let targetTeam="T2"><<findInTeamScope>></$let>
+findInTeam-via-param-T9: <<findInTeamParam "T9">>
+findInTeam-via-scope-T9: <$let targetTeam="T9"><<findInTeamScope>></$let>

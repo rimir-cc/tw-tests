@@ -1,0 +1,22 @@
+title: RunTest
+
+\procedure blockBox()
+!! Heading
+* item-1
+* item-2
+\end
+
+via-macrocall:
+<$macrocall $name="blockBox"/>
+
+via-transclude-default:
+<$transclude $variable="blockBox"/>
+
+via-transclude-block:
+<$transclude $variable="blockBox" $mode="block"/>
+
+via-transclude-inline:
+<$transclude $variable="blockBox" $mode="inline"/>
+
+via-bare-call:
+<<blockBox>>

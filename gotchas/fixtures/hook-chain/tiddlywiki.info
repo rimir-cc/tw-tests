@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: hook chain breaks if intermediate hook returns undefined; subsequent hooks see the undefined, not the original tiddler",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

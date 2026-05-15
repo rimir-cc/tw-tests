@@ -1,0 +1,7 @@
+title: RunTest
+
+<$let baseTitle="Base">
+naive-concat: [<$text text=<<baseTitle>>:suffix/>]
+filter-concat: [<$text text={{{[<baseTitle>addsuffix[:suffix]]}}}/>]
+macro-concat: [<$text text=`$(baseTitle)$:suffix`/>]
+</$let>

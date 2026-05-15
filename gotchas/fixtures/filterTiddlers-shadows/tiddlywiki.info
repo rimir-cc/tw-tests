@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $tw.wiki.filterTiddlers excludes shadows; explicit all[shadows+tiddlers] in the filter brings them in",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

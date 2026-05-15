@@ -1,0 +1,15 @@
+<p>via-macrocall:
+!! Heading
+* item-1
+* item-2</p><p>via-transclude-default:
+!! Heading
+* item-1
+* item-2</p><p>via-transclude-block:
+<h2 class="">Heading</h2><ul><li>item-1</li><li>item-2</li></ul></p><p>via-transclude-inline:
+!! Heading
+* item-1
+* item-2</p><p>via-bare-call:
+!! Heading
+* item-1
+* item-2
+</p>

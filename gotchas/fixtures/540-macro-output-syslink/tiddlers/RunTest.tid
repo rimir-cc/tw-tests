@@ -1,0 +1,8 @@
+title: RunTest
+
+<$let plainVal="hello" syslinkVal="$:/some/path">
+plain-double-angle: <<plainVal>>
+syslink-double-angle: <<syslinkVal>>
+plain-text-widget: <$text text=<<plainVal>>/>
+syslink-text-widget: <$text text=<<syslinkVal>>/>
+</$let>

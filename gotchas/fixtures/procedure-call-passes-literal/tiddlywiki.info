@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: <<proc bareArg>> passes the literal token, not the variable's value",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

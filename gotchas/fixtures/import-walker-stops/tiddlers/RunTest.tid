@@ -1,0 +1,6 @@
+title: RunTest
+
+\import [[TiddlerCleanA]] [[TiddlerDirtyA]]
+
+clean-via-import: [<<procFromCleanA>>]
+dirty-via-import: [<<procFromDirtyA>>]

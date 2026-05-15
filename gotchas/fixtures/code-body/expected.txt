@@ -1,0 +1,11 @@
+This fixture documents what code-body: yes ACTUALLY does in TW 5.4.0,
+which contradicts an older memory claim.normal-transclude: [HELLO
+]
+code-body-transclude: [HELLO
+]If memory's claim ("code-body disables pragma parsing") were true,
+code-body-transclude would render literal \procedure greet() HELLO  <<greet>>.
+It does not — it renders HELLO. code-body only affects which
+ViewTemplateBody is selected in the BROWSER view (cascade redirects
+to $:/core/ui/ViewTemplate/body/code which shows raw text). It does
+NOT change the wikitext parser. So pragmas still register and
+transclusion / –render still evaluate them.

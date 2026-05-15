@@ -1,0 +1,5 @@
+title: RunTest
+
+before<%-- this should be a comment but isn't --%>after
+before<!-- this IS a real comment -->after
+before<%if [<x>match[never]] %>if-branch<%endif%>after

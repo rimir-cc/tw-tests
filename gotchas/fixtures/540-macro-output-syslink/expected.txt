@@ -1,0 +1,7 @@
+<p>
+plain-double-angle: hello
+syslink-double-angle: <a class="tc-tiddlylink tc-tiddlylink-missing" href="#%24%3A%2Fsome%2Fpath">$:/some/path</a>
+plain-text-widget: hello
+syslink-text-widget: $:/some/path
+
+</p>

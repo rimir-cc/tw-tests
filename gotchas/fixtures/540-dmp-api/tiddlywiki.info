@@ -1,0 +1,5 @@
+{
+    "description": "TW 5.4.0: diff-match-patch refactored from class to flat function exports; method names switched to camelCase",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

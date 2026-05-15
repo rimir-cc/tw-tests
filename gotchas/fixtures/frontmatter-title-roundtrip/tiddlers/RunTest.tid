@@ -1,0 +1,5 @@
+title: RunTest
+
+with-colon-exists: <$list filter="[[Has:Colon]is[tiddler]]" variable=v>[exists:<<v>>]</$list>
+with-colon-extra: <$list filter="[[Has:Colon]get[extra]]" variable=v>[<<v>>]</$list>
+underscore-exists: <$list filter="[[Has_Colon]is[tiddler]]" variable=v>[exists:<<v>>]</$list>

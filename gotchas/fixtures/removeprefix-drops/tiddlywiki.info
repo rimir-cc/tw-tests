@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: removeprefix/removesuffix DROP titles that don't match; use ~ fallback operator",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

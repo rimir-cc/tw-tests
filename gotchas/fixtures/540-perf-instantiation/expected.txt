@@ -1,0 +1,5 @@
+before-load-modules defined: [false]
+before-load-modules constructor: [undefined]
+before-startup defined: [true]
+before-startup constructor: [Performance]
+before-startup hasLog: [true]

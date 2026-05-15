@@ -1,0 +1,5 @@
+title: RunTest
+
+chain(AND): <$list filter="[tag[X]tag[Y]sort[title]]" variable=t><<t>>,</$list>
+runs-spaced(OR): <$list filter="[tag[X]] [tag[Y]] +[sort[title]]" variable=t><<t>>,</$list>
+runs-nospace(OR): <$list filter="[tag[X]][tag[Y]] +[sort[title]]" variable=t><<t>>,</$list>

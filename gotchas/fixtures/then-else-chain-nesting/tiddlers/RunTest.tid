@@ -1,0 +1,13 @@
+title: RunTest
+
+\function nonemptySrc() [[X]]
+\function emptySrc() [tag[NoSuchTagExists]]
+
+debug-emptySrc: <$list filter="[function[emptySrc]count[]]" variable=n><<n>></$list>
+basic-then-nonempty: <$list filter="[function[nonemptySrc]] :then[[A]]" variable=t>[<<t>>]</$list>
+basic-then-empty: <$list filter="[function[emptySrc]] :then[[A]]" variable=t>[<<t>>]</$list>
+basic-else-nonempty: <$list filter="[function[nonemptySrc]] :else[[A]]" variable=t>[<<t>>]</$list>
+basic-else-empty: <$list filter="[function[emptySrc]] :else[[A]]" variable=t>[<<t>>]</$list>
+chain-three-thens: <$list filter="[function[nonemptySrc]] :then[[A]] :then[[B]] :then[[C]]" variable=t>[<<t>>]</$list>
+then-else-pair-nonempty: <$list filter="[function[nonemptySrc]] :then[[A]] :else[[fallback]]" variable=t>[<<t>>]</$list>
+then-else-pair-empty: <$list filter="[function[emptySrc]] :then[[A]] :else[[fallback]]" variable=t>[<<t>>]</$list>

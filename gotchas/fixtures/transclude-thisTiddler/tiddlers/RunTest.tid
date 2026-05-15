@@ -1,0 +1,6 @@
+title: RunTest
+
+at-root[thisTiddler=<<thisTiddler>>|currentTiddler=<<currentTiddler>>]
+via-transclude-tiddler: <$transclude $tiddler="Probe"/>
+via-transclude-no-tiddler: <$transclude $tiddler="Probe" $mode="inline"/>
+list-iter: <$list filter="[[Probe]]" variable=item>list[thisTiddler=<<thisTiddler>>|currentTiddler=<<currentTiddler>>|item=<<item>>]</$list>

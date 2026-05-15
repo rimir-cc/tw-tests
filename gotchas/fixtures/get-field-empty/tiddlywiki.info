@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: get[field] returns nothing (not empty title) for missing/empty fields; downstream ops see empty source",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

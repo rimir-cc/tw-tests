@@ -1,0 +1,8 @@
+
+let-naive-value: A
+let-naive-enlisted: A,
+
+
+let-joined-value: A B C
+let-joined-enlisted: A,B,C,
+

@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: TW has no <%-- --%> wikitext comment; use <!-- --> or omit",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

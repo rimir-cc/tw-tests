@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: widget body straddling an HTML element boundary leaks closing tags as literal text",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

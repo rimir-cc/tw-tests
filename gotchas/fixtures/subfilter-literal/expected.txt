@@ -1,0 +1,6 @@
+literal-nested: [Filter error: Missing [ in filter expression]
+literal-no-extra-brackets: [Filter error: Missing [ in filter expression]
+via-function: [Filter error: Missing [ in filter expression]
+via-variable: [Foo]
+via-tiddler-textref: [Foo]
+via-tiddler-trimmed: [Foo]

@@ -1,0 +1,9 @@
+title: RunTest
+
+\function hasHotMarkImplicit() [<currentTiddler>get[mark]match[hot]]
+\function hasHotMarkExplicit(t) [<t>get[mark]match[hot]]
+
+filter-implicit: <$list filter="[[A]] [[B]] [[C]] :filter[function[hasHotMarkImplicit]]" variable=t>[<<t>>]</$list>
+filter-explicit: <$list filter="[[A]] [[B]] [[C]] :filter[function[hasHotMarkExplicit],<currentTiddler>]" variable=t>[<<t>>]</$list>
+map-implicit: <$list filter="[[A]] [[B]] [[C]] :map[function[hasHotMarkImplicit]]" variable=t>[<<t>>]</$list>
+map-explicit: <$list filter="[[A]] [[B]] [[C]] :map[function[hasHotMarkExplicit],<currentTiddler>]" variable=t>[<<t>>]</$list>

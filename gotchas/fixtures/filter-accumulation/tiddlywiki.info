@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: :filter[X] applies to ALL accumulated runs, not just the preceding one",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

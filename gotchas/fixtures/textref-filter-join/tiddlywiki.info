@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $let var={{{multi-filter}}} keeps only the FIRST result; chain +[join[ ]] to keep all",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

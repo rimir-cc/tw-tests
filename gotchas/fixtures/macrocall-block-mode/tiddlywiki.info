@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $macrocall renders inline mode; use $transclude $variable $mode=block for block-level output",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

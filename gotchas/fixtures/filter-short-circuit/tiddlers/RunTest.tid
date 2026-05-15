@@ -1,0 +1,9 @@
+title: RunTest
+
+<$let v="PRESENT">
+in-one-run-then-wiped: <$list filter="[<v>is[blank]then[yes-blank]enlist-input[]match[never]]" variable=r>[<<r>>]</$list>
+separate-runs-with-else: <$list filter="[<v>is[blank]then[yes-blank]] ~[<v>then[yes-not-blank]]" variable=r>[<<r>>]</$list>
+</$let>
+<$let blank-v="">
+empty-then-and-else: <$list filter="[<blank-v>is[blank]then[yes-blank]] ~[<blank-v>then[yes-not-blank]]" variable=r>[<<r>>]</$list>
+</$let>

@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: complex filter expressions referencing \\procedure params via $transclude $variable can silently produce empty; pre-compute in caller scope",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

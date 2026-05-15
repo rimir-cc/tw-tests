@@ -1,0 +1,8 @@
+title: RunTest
+
+DirectAdd-alpha: [<$list filter="[[DirectAdd]has[alpha]get[alpha]]" variable=v><<v>></$list>]
+DirectAdd-beta: [<$list filter="[[DirectAdd]has[beta]get[beta]]" variable=v><<v>></$list>]
+DirectAdd-text-length: <$list filter="[[DirectAdd]get[text]length[]]" variable=v><<v>></$list>
+ViaDeserialize-alpha: [<$list filter="[[ViaDeserialize]has[alpha]get[alpha]]" variable=v><<v>></$list>]
+ViaDeserialize-beta: [<$list filter="[[ViaDeserialize]has[beta]get[beta]]" variable=v><<v>></$list>]
+ViaDeserialize-text-length: <$list filter="[[ViaDeserialize]get[text]length[]]" variable=v><<v>></$list>

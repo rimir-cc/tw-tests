@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: \\import-walker stops on first non-setvariable node; \\procedure defs after \\import in the target tiddler are silently dropped",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

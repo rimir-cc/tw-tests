@@ -1,0 +1,10 @@
+title: RunTest
+
+<$let s={{{[[A]] [[B]] [[C]]}}}>
+let-naive-value: <<s>>
+let-naive-enlisted: <$list filter="[enlist<s>]" variable=t><<t>>,</$list>
+</$let>
+<$let s={{{[[A]] [[B]] [[C]] +[join[ ]]}}}>
+let-joined-value: <<s>>
+let-joined-enlisted: <$list filter="[enlist<s>]" variable=t><<t>>,</$list>
+</$let>

@@ -1,0 +1,8 @@
+
+plain-double-angle: [PLAIN]
+dotted-double-angle: [DOTTED]
+plain-in-filter: [PLAIN]
+dotted-in-filter: [DOTTED]
+plain-as-text-widget: [PLAIN]
+dotted-as-text-widget: [DOTTED]
+

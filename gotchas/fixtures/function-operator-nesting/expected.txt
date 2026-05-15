@@ -1,0 +1,4 @@
+inside-run: 2
+outside-with-plus: 2
+outside-no-plus: Filter error: Missing [ in filter expression
+outside-no-plus-listed: [Filter error: Missing [ in filter expression]

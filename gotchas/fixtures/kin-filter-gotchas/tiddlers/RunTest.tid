@@ -1,0 +1,12 @@
+title: RunTest
+
+direction semantics (with operand):
+from-L2A: <$list filter="[[L2A]kin:parent:from[]] +[sort[title]]" variable=t><<t>>,</$list>
+to-L2A: <$list filter="[[L2A]kin:parent:to[]] +[sort[title]]" variable=t><<t>>,</$list>
+from-Root: <$list filter="[[Root]kin:parent:from[]] +[sort[title]]" variable=t><<t>>,</$list>
+to-Root: <$list filter="[[Root]kin:parent:to[]] +[sort[title]]" variable=t><<t>>,</$list>
+to-Root-exclude-base: <$list filter="[[Root]kin:parent:to[]] -[[Root]] +[sort[title]]" variable=t><<t>>,</$list>
+source-vs-operand semantics:
+empty-op-narrow-source: <$list filter="[[L2A]kin:parent:from[]] +[sort[title]]" variable=t><<t>>,</$list>
+named-op-narrow-source: <$list filter="[[L1B]kin:parent:from[L2A]] +[sort[title]]" variable=t><<t>>,</$list>
+named-op-broad-source: <$list filter="[all[tiddlers]kin:parent:from[L2A]] +[sort[title]]" variable=t><<t>>,</$list>

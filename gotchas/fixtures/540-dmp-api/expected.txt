@@ -1,0 +1,6 @@
+hasFlatDiffMain: [true]
+hasFlatPatchMake: [true]
+hasFlatMatch: [true]
+hasOldClass: [false]
+oldStyleWorks: [throws:dmp.diff_match_patch is not a constructor]
+flatStyleWorks: [yes]

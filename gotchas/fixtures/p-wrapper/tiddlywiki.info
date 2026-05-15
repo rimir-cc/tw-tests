@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: TW wraps inline wikitext in <p>; observable via text/html render",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $reveal can't fragment HTML element boundaries; closing tag renders as literal text",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

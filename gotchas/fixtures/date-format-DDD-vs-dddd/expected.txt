@@ -1,0 +1,9 @@
+2024-01-01 is Monday:
+DDD: Monday
+ddd: Mon
+dddd: 1
+MMM: January
+MM: 1
+2024-01-07 is Sunday:
+DDD: Sunday
+dddd: 7

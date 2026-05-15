@@ -1,0 +1,10 @@
+direction semantics (with operand):
+from-L2A: L1A,L2A,Root,
+to-L2A: L2A,
+from-Root: Root,
+to-Root: L1A,L1B,L2A,Root,
+to-Root-exclude-base: L1A,L1B,L2A,
+source-vs-operand semantics:
+empty-op-narrow-source: L1A,L2A,Root,
+named-op-narrow-source: 
+named-op-broad-source: L1A,L2A,Root,

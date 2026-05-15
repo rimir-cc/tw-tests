@@ -1,0 +1,4 @@
+single-A: [StorageB]
+double-A: [ACTUAL_CONTENT]
+single-Standalone: [PLAIN_STRING]
+double-Standalone: []

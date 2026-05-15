@@ -1,0 +1,4 @@
+title: RunTest
+
+filterTiddlers no prefix: count=<$list filter="[[FilterProbeResults]get[noPrefixCount]]" variable=v><<v>></$list>, sample=[<$list filter="[[FilterProbeResults]get[noPrefixSample]]" variable=v><<v>></$list>]
+filterTiddlers all[shadows+tiddlers]: count=<$list filter="[[FilterProbeResults]get[withShadowsCount]]" variable=v><<v>></$list>, sample=[<$list filter="[[FilterProbeResults]get[withShadowsSample]]" variable=v><<v>></$list>]

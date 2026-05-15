@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: ops after function[name]] are outside the run; chain inside or use +[…] new-run",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

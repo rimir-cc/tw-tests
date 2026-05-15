@@ -1,0 +1,5 @@
+title: RunTest
+
+literal-format-Z: [<<now "ZZZ-PURE-LITERAL">>]
+literal-no-tokens: [<<now "no-tokens-here">>]
+filter-now-op-literal: [<$list filter="[now[ZZ-LITERAL]]" variable=v><<v>></$list>]

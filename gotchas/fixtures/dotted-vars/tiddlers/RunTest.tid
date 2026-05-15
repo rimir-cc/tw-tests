@@ -1,0 +1,10 @@
+title: RunTest
+
+<$let plainVar="PLAIN" f.status="DOTTED">
+plain-double-angle: [<<plainVar>>]
+dotted-double-angle: [<<f.status>>]
+plain-in-filter: [<$list filter="[<plainVar>]" variable=t><<t>></$list>]
+dotted-in-filter: [<$list filter="[<f.status>]" variable=t><<t>></$list>]
+plain-as-text-widget: [<$text text=<<plainVar>>/>]
+dotted-as-text-widget: [<$text text=<<f.status>>/>]
+</$let>

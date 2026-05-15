@@ -1,0 +1,4 @@
+title: JsonData
+type: application/json
+
+[{"name":"alice","age":30},{"name":"bob","age":40},{"name":"carol","age":50}]

@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: code-body:yes disables pragma parsing; \\procedure renders as literal text",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

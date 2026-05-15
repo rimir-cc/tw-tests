@@ -1,0 +1,8 @@
+title: RunTest
+
+all: <$list filter="[[file.md]] [[file.txt]] [[notes.md]] +[sort[]]" variable=t>[<<t>>]</$list>
+naive-removesuffix: <$list filter="[[file.md]] [[file.txt]] [[notes.md]] +[removesuffix[.md]sort[]]" variable=t>[<<t>>]</$list>
+guard-with-filter: <$list filter="[[file.md]] [[file.txt]] [[notes.md]] :filter[suffix[.md]] :map[removesuffix[.md]] +[sort[]]" variable=t>[<<t>>]</$list>
+chained-naive-match-both: <$list filter="[[a.md.txt]] +[removesuffix[.txt]removesuffix[.md]]" variable=t>[<<t>>]</$list>
+chained-naive-match-second-only: <$list filter="[[a.md]] +[removesuffix[.txt]removesuffix[.md]]" variable=t>[<<t>>]</$list>
+chained-naive-match-first-only: <$list filter="[[a.txt]] +[removesuffix[.txt]removesuffix[.md]]" variable=t>[<<t>>]</$list>

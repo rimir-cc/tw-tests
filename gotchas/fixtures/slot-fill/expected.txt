@@ -1,0 +1,8 @@
+hyphen-no-fill: [fallback-hyphen
+]
+hyphen-with-fill: [FILLED-HYPHEN
+]
+colon-no-fill: [fallback-colon
+]
+colon-with-fill: [FILLED-COLON
+]

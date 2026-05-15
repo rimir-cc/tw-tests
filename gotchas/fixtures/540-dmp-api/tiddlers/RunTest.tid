@@ -1,0 +1,8 @@
+title: RunTest
+
+hasFlatDiffMain: [<$list filter="[[DmpProbeResults]get[hasFlatDiffMain]]" variable=v><<v>></$list>]
+hasFlatPatchMake: [<$list filter="[[DmpProbeResults]get[hasFlatPatchMake]]" variable=v><<v>></$list>]
+hasFlatMatch: [<$list filter="[[DmpProbeResults]get[hasFlatMatch]]" variable=v><<v>></$list>]
+hasOldClass: [<$list filter="[[DmpProbeResults]get[hasOldClass]]" variable=v><<v>></$list>]
+oldStyleWorks: [<$list filter="[[DmpProbeResults]get[oldStyleWorks]]" variable=v><<v>></$list>]
+flatStyleWorks: [<$list filter="[[DmpProbeResults]get[flatStyleWorks]]" variable=v><<v>></$list>]

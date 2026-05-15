@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: \\function bodies don't reliably inherit caller's <currentTiddler> in :filter/:map; declare named params and pass explicitly",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

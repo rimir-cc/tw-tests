@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: kin:field:from = ancestors, kin:field:to = descendants; base IS included in result",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

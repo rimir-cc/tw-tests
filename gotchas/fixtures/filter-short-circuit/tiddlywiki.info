@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: filters don't short-circuit; [X]then[Y] continues, later ops can wipe result",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

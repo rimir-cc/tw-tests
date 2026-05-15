@@ -1,0 +1,6 @@
+title: RunTest
+
+hyphen-no-fill: [<$transclude $tiddler="HyphenComp"/>]
+hyphen-with-fill: [<$transclude $tiddler="HyphenComp"><$fill $name="view-sec">FILLED-HYPHEN</$fill></$transclude>]
+colon-no-fill: [<$transclude $tiddler="ColonComp"/>]
+colon-with-fill: [<$transclude $tiddler="ColonComp"><$fill $name="view:sec">FILLED-COLON</$fill></$transclude>]

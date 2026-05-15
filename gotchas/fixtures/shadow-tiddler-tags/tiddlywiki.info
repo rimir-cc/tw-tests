@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: [tag[X]] skips plugin shadows; use [all[tiddlers+shadows]tag[X]]",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

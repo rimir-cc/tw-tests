@@ -1,0 +1,20 @@
+title: RunTest
+
+PROPER NESTING:
+<$let foo="proper">
+<div class="proper">
+inside-foo-<<foo>>
+</div>
+</$let>
+
+STRADDLING NESTING:
+<div class="straddle">
+<$let bar="straddle">
+inside-bar-<<bar>>
+</div>
+</$let>
+
+AFTER STRADDLE:
+<$let baz="downstream">
+text-with-baz-<<baz>>
+</$let>

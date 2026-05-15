@@ -1,0 +1,3 @@
+title: $:/plugins/gotchas/perf-probe-early.js
+type: application/javascript
+module-type: startup

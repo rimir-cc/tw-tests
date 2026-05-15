@@ -1,0 +1,4 @@
+all-mine: [HasMark][NoMark]
+chain-negation: [NoMark]
+filter-negation: [NoMark]
+filter-positive: [HasMark]

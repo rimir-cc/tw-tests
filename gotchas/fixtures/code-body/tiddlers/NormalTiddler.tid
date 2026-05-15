@@ -1,0 +1,4 @@
+title: NormalTiddler
+
+\procedure greet() HELLO
+<<greet>>

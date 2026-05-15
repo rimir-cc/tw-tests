@@ -1,0 +1,4 @@
+<p>before&lt;%– this should be a comment but isn't –%&gt;after
+beforeafter
+beforeafter
+</p>

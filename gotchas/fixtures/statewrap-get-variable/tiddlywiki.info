@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: \\function fake widget breaks statewrap-get (no parentWidget); use \\procedure + subfilter",
+    "plugins": [
+        "rimir/statewrap"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

@@ -1,0 +1,3 @@
+title: HyphenComp
+
+<$slot $name="view-sec">fallback-hyphen</$slot>

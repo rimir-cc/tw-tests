@@ -1,0 +1,10 @@
+title: RunTest
+
+\function configFilter() [tag[X]]
+
+literal-nested: <$list filter="[subfilter[[tag[X]]]]" variable=t>[<<t>>]</$list>
+literal-no-extra-brackets: <$list filter="[subfilter[tag[X]]]" variable=t>[<<t>>]</$list>
+via-function: <$list filter="[subfilter[function[configFilter]]]" variable=t>[<<t>>]</$list>
+via-variable: <$let f="[tag[X]]"><$list filter="[subfilter<f>]" variable=t>[<<t>>]</$list></$let>
+via-tiddler-textref: <$list filter="[subfilter{FilterDef!!text}]" variable=t>[<<t>>]</$list>
+via-tiddler-trimmed: <$let f={{{[[FilterDef]get[text]trim[]]}}}><$list filter="[subfilter<f>]" variable=t>[<<t>>]</$list></$let>

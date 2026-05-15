@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: :then/:else chains don't nest; each checks accumulated result, last :then always wins",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

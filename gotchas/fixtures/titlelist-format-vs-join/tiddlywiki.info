@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: +[join[ ]] then enlist tokenizes multi-word titles; use +[format:titlelist[]join[ ]]",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

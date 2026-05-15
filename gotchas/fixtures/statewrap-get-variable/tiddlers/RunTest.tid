@@ -1,0 +1,10 @@
+title: RunTest
+
+\function fnGet() [statewrap-get[section]]
+\procedure procGet() [statewrap-get[section]]
+
+<$statewrap channels="section" default-section="MY_SECTION" instid="testid">
+direct: <$list filter="[statewrap-get[section]]" variable=v>[<<v>>]</$list>
+via-function: <$list filter="[function[fnGet]]" variable=v>[<<v>>]</$list>
+via-subfilter: <$list filter="[subfilter<procGet>]" variable=v>[<<v>>]</$list>
+</$statewrap>

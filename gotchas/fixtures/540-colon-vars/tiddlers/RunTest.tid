@@ -1,0 +1,9 @@
+title: RunTest
+
+<$let plainName="PLAIN_VALUE" foo:bar="COLON_VALUE">
+plain-via-angle: [<<plainName>>]
+colon-via-angle: [<<foo:bar>>]
+colon-via-text-name: [<$text text=<<foo:bar>>/>]
+plain-in-filter: [<$list filter="[<plainName>]" variable=t><<t>></$list>]
+colon-in-filter: [<$list filter="[<foo:bar>]" variable=t><<t>></$list>]
+</$let>

@@ -1,0 +1,11 @@
+title: RunTest
+
+2024-01-01 is Monday:
+DDD: <$list filter="[[20240101120000000]format:date[DDD]]" variable=v><<v>></$list>
+ddd: <$list filter="[[20240101120000000]format:date[ddd]]" variable=v><<v>></$list>
+dddd: <$list filter="[[20240101120000000]format:date[dddd]]" variable=v><<v>></$list>
+MMM: <$list filter="[[20240101120000000]format:date[MMM]]" variable=v><<v>></$list>
+MM: <$list filter="[[20240101120000000]format:date[MM]]" variable=v><<v>></$list>
+2024-01-07 is Sunday:
+DDD: <$list filter="[[20240107120000000]format:date[DDD]]" variable=v><<v>></$list>
+dddd: <$list filter="[[20240107120000000]format:date[dddd]]" variable=v><<v>></$list>

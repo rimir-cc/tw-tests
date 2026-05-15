@@ -1,0 +1,6 @@
+title: RunTest
+
+all-mine: <$list filter="[[HasMark]] [[NoMark]] +[sort[]]" variable=t>[<<t>>]</$list>
+chain-negation: <$list filter="[[HasMark]] [[NoMark]] +[!has[mark]sort[]]" variable=t>[<<t>>]</$list>
+filter-negation: <$list filter="[[HasMark]] [[NoMark]] :filter[!has[mark]] +[sort[]]" variable=t>[<<t>>]</$list>
+filter-positive: <$list filter="[[HasMark]] [[NoMark]] :filter[has[mark]] +[sort[]]" variable=t>[<<t>>]</$list>

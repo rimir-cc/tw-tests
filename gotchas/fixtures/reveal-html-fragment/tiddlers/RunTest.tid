@@ -1,0 +1,11 @@
+title: RunTest
+
+<$let mode="A">
+<$reveal type="match" stateTitle="" stateField="" stateIndex="" text="A" default=<<mode>>>
+<div class="opened-by-reveal">
+</$reveal>
+inside-or-not
+<$reveal type="match" stateTitle="" stateField="" stateIndex="" text="A" default=<<mode>>>
+</div>
+</$reveal>
+</$let>

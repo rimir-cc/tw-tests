@@ -1,0 +1,5 @@
+{
+    "description": "TW 5.4.0: $tw.perf is instantiated during load-modules startup, not the legacy startup module — affects plugins with before:[startup] expecting to patch Performance first",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

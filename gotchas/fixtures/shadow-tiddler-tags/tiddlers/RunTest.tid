@@ -1,0 +1,6 @@
+title: RunTest
+
+user-tag-skips-shadows: <$list filter="[tag[MyTag]count[]]" variable=n><<n>></$list>
+user-tag-with-shadows: <$list filter="[all[tiddlers+shadows]tag[MyTag]count[]]" variable=n><<n>></$list>
+shadow-tag-skips-shadows: <$list filter="[tag[$:/tags/AdvancedSearch]count[]]" variable=n><<n>></$list>
+shadow-tag-with-shadows: <$list filter="[all[tiddlers+shadows]tag[$:/tags/AdvancedSearch]count[]]" variable=n><<n>></$list>

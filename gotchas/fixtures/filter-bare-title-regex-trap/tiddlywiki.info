@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: bare bracket [a/b/c] in filter is parsed as op/regex/, not title literal; subtraction silently no-ops",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

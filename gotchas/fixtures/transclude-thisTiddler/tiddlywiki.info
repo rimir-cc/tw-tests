@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha (5.4.0+): $transclude $tiddler= sets thisTiddler, not currentTiddler",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

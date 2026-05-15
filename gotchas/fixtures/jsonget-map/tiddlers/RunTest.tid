@@ -1,0 +1,8 @@
+title: RunTest
+
+\function jsonText() [[JsonData]get[text]]
+
+indexes: <$list filter="[function[jsonText]jsonindexes[]]" variable=i>[<<i>>]</$list>
+chained-jsonget: <$list filter="[function[jsonText]jsonindexes[]] :map[function[jsonText]jsonget<currentTiddler>jsonget[name]]" variable=n>[<<n>>]</$list>
+extract-then-get: <$list filter="[function[jsonText]jsonindexes[]] :map[function[jsonText]jsonextract<currentTiddler>jsonget[name]]" variable=n>[<<n>>]</$list>
+direct-multi-arg: <$list filter="[function[jsonText]jsonindexes[]] :map[function[jsonText]jsonget<currentTiddler>,[name]]" variable=n>[<<n>>]</$list>

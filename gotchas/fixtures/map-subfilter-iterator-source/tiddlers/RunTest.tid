@@ -1,0 +1,4 @@
+title: RunTest
+
+naive-no-prefix: <$list filter="[[A]] [[B]] [[C]] :map:flat[has[parent]field:parent<currentTiddler>]" variable=t>[<<t>>]</$list>
+with-all-prefix: <$list filter="[[A]] [[B]] [[C]] :map:flat[all[tiddlers]has[parent]field:parent<currentTiddler>]" variable=t>[<<t>>]</$list>

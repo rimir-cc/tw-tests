@@ -1,0 +1,2 @@
+filterTiddlers no prefix: count=0, sample=[]
+filterTiddlers all[shadows+tiddlers]: count=4, sample=[$:/core/ui/AdvancedSearch/Standard,$:/core/ui/AdvancedSearch/System,$:/core/ui/AdvancedSearch/Shadows]

@@ -1,0 +1,13 @@
+title: RunTest
+
+\define defineDollar(x) val=$x$
+\procedure procDollar(x) val=$x$
+\procedure procAngle(x) val=<<x>>
+\function funcDollar(x) [<x>addprefix[$x$=]]
+\function funcAngle(x) [<x>addprefix[val=]]
+
+define-with-dollar: <<defineDollar "HELLO">>
+procedure-with-dollar: <<procDollar "HELLO">>
+procedure-with-angle: <<procAngle "HELLO">>
+function-with-dollar: <$list filter="[function[funcDollar],[HELLO]]" variable=v><<v>></$list>
+function-with-angle: <$list filter="[function[funcAngle],[HELLO]]" variable=v><<v>></$list>

@@ -1,0 +1,6 @@
+at-root[thisTiddler=|currentTiddler=RunTest]
+via-transclude-tiddler: probe[thisTiddler=Probe|currentTiddler=RunTest]
+
+via-transclude-no-tiddler: probe[thisTiddler=Probe|currentTiddler=RunTest]
+
+list-iter: list[thisTiddler=|currentTiddler=RunTest|item=Probe]

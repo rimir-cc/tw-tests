@@ -1,0 +1,11 @@
+title: RunTest
+
+\procedure showit(arg) arg=<<arg>>
+\procedure inherit-outer() arg=<<myvar>>
+
+<$let myvar="REAL">
+direct: <<myvar>>
+bare-arg: <<showit myvar>>
+quoted-arg: <<showit "REAL">>
+inherit-no-param: <<inherit-outer>>
+</$let>

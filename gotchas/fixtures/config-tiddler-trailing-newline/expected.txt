@@ -1,0 +1,4 @@
+text-length: 2
+trimmed-length: 1
+split-naive: [A|B|C]
+split-trimmed: [A][B][C]

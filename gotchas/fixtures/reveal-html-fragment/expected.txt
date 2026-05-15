@@ -1,0 +1,10 @@
+<p>
+<span class="tc-reveal">
+<div class="opened-by-reveal">
+&lt;/$reveal&gt;
+inside-or-not
+<span class="tc-reveal">
+&lt;/div&gt;
+</span>
+&lt;/$let&gt;
+</div></span></p>

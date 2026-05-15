@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: \\function body is single-line; continuation lines leak as tiddler body text",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

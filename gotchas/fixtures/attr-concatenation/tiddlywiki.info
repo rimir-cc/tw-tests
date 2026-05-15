@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: $attr=<<v>>:suffix doesn't concatenate; use filter attribute syntax",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

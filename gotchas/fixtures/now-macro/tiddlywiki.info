@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: <<now>> macro syntax vs <now> filter variable vs now[] operator",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}

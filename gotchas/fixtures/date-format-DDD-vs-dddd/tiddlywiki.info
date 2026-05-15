@@ -1,0 +1,5 @@
+{
+    "description": "Gotcha: DDD = locale day name (text); dddd = numeric Mon=1..Sun=7",
+    "plugins": [],
+    "themes": ["tiddlywiki/vanilla"]
+}
