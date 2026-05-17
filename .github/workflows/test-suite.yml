@@ -1,0 +1,91 @@
+name: Test Suite
+
+# Central CI for the rimir TiddlyWiki plugin suite.
+# Runs Jasmine (umbrella) + Playwright (E2E) + gotchas (CLI regressions) against
+# all public plugins. Per-plugin Jasmine CI (notify-library.yml) stays as-is for
+# fast per-plugin gating; this workflow proves the whole suite still works together.
+#
+# Triggers:
+#   - push to main of tw-tests itself
+#   - pull_request to main
+#   - workflow_dispatch (manual run)
+#   - repository_dispatch type "plugin-updated" (sent by each plugin's notify-library.yml — TODO: wire up)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [plugin-updated]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout tw-tests
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "tw-tests-ci",
+            "private": true,
+            "dependencies": {
+              "tiddlywiki": "~5.4.0",
+              "chokidar": "^4.0.3"
+            },
+            "devDependencies": {
+              "@playwright/test": "^1.58.2"
+            }
+          }
+          EOF
+          npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Clone public plugins
+        run: |
+          mkdir -p dev-wiki/plugins/rimir
+          PLUGINS=(
+            appify capture components core-hook cytoscape-engine diffsync
+            doc-template explide ext-connect external-llm-help file-pipeline
+            file-upload filesystem-watcher frontmatter git-int json-dsl
+            knowledge-app llm-connect llm-help mindmap mindmap-elixir minver
+            msg-import namespace present realms runner scattered-binaries
+            statewrap theme typed
+          )
+          for p in "${PLUGINS[@]}"; do
+            echo "  cloning $p"
+            git clone --depth 1 "https://github.com/rimir-cc/tw-${p}.git" "dev-wiki/plugins/rimir/${p}" 2>&1 | sed 's/^/    /'
+          done
+
+      - name: Run Jasmine (umbrella)
+        run: ./testwiki.sh
+
+      - name: Run gotchas
+        run: ./gotchas/run.sh
+
+      - name: Run Playwright
+        # pwwiki.sh's webServer setting spawns `npx tiddlywiki pw-edition --listen port=9091` itself.
+        run: ./pwwiki.sh
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
