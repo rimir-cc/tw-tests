@@ -1,4 +1,5 @@
 const { defineConfig } = require("@playwright/test");
+const path = require("path");
 
 module.exports = defineConfig({
 	testDir: "./tests/e2e",
@@ -22,7 +23,9 @@ module.exports = defineConfig({
 		reuseExistingServer: false,
 		timeout: 15000,
 		env: {
-			TIDDLYWIKI_PLUGIN_PATH: "../dev-wiki/plugins",
+			// Absolute path — see comment in testwiki.sh re path.resolve()
+			// consistency for cross-tree refs in tiddlywiki.files specs.
+			TIDDLYWIKI_PLUGIN_PATH: path.resolve(__dirname, "../dev-wiki/plugins"),
 		},
 	},
 });

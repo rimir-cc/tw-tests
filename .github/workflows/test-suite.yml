@@ -88,6 +88,20 @@ jobs:
             git clone --depth 1 "https://github.com/rimir-cc/tw-${p}.git" "dev-wiki/plugins/rimir/${p}" 2>&1 | sed 's/^/    /'
           done
 
+      - name: Stage flibbles fixtures for namespace test-edition
+        # namespace/test-edition/tiddlers/tiddlywiki.files references
+        # ../../../../../tiddlers/_system/plugins/flibbles/{relink,relink-titles}.json
+        # which resolves to <workspace>/dev-wiki/tiddlers/... when plugins are
+        # loaded via an absolute TIDDLYWIKI_PLUGIN_PATH (set by testwiki.sh).
+        # Locally these come from the dev-wiki; in CI we ship them as fixtures
+        # in the namespace plugin's repo under .github/ci-fixtures/.
+        run: |
+          mkdir -p dev-wiki/tiddlers/_system/plugins/flibbles
+          cp dev-wiki/plugins/rimir/namespace/.github/ci-fixtures/relink.json \
+             dev-wiki/tiddlers/_system/plugins/flibbles/relink.json
+          cp dev-wiki/plugins/rimir/namespace/.github/ci-fixtures/relink-titles.json \
+             dev-wiki/tiddlers/_system/plugins/flibbles/relink-titles.json
+
       - name: Run Jasmine (umbrella)
         working-directory: tw-tests
         run: ./testwiki.sh
