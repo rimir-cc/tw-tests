@@ -9,7 +9,7 @@ name: Test Suite
 #   - push to main of tw-tests itself
 #   - pull_request to main
 #   - workflow_dispatch (manual run)
-#   - repository_dispatch type "plugin-updated" (sent by each plugin's notify-library.yml — TODO: wire up)
+#   - repository_dispatch type "plugin-updated" (one fires per plugin push)
 
 on:
   push:
@@ -20,20 +20,39 @@ on:
   repository_dispatch:
     types: [plugin-updated]
 
+# Coalesce bursts (e.g. several plugins pushed back-to-back) onto a single
+# trailing run. The in-flight run is cancelled when a newer dispatch arrives.
+concurrency:
+  group: test-suite
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Workspace layout MUST mirror the local dev setup:
+    #
+    #   $GITHUB_WORKSPACE/
+    #     tw-tests/                       <- this repo (checked out as subdir)
+    #     dev-wiki/plugins/rimir/<plugin> <- cloned in "Clone public plugins"
+    #     node_modules/                   <- created by "Install npm dependencies"
+    #     package.json                    <- created by "Install npm dependencies"
+    #
+    # testwiki.sh and playwright.config.js both reference plugins via
+    # `../dev-wiki/plugins`; gotchas/run.sh references `../../node_modules`.
+    # Both expect $GITHUB_WORKSPACE as the parent of tw-tests/.
     steps:
-      - name: Checkout tw-tests
+      - name: Checkout tw-tests (as subdirectory)
         uses: actions/checkout@v4
+        with:
+          path: tw-tests
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install npm dependencies
+      - name: Install npm dependencies (at workspace root)
         run: |
           cat > package.json <<'EOF'
           {
@@ -53,7 +72,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Clone public plugins
+      - name: Clone public plugins (at workspace root)
         run: |
           mkdir -p dev-wiki/plugins/rimir
           PLUGINS=(
@@ -70,13 +89,16 @@ jobs:
           done
 
       - name: Run Jasmine (umbrella)
+        working-directory: tw-tests
         run: ./testwiki.sh
 
       - name: Run gotchas
+        working-directory: tw-tests
         run: ./gotchas/run.sh
 
       - name: Run Playwright
         # pwwiki.sh's webServer setting spawns `npx tiddlywiki pw-edition --listen port=9091` itself.
+        working-directory: tw-tests
         run: ./pwwiki.sh
 
       - name: Upload Playwright report on failure
@@ -85,7 +107,7 @@ jobs:
         with:
           name: playwright-report
           path: |
-            playwright-report/
-            test-results/
+            tw-tests/playwright-report/
+            tw-tests/test-results/
           if-no-files-found: ignore
           retention-days: 7
