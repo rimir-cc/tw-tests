@@ -66,9 +66,9 @@ test.describe("core-hook plugin", () => {
 		await cp.locator("button, a").filter({ hasText: "Settings" }).first().click();
 		await cp.locator("button, a").filter({ hasText: "Rimi Plugins" }).click();
 
-		// Click on orga (has empty settings)
+		// Click on a public plugin known to ship the empty-settings info card
 		const sidebar = cp.locator(".rr-settings-sidebar");
-		await sidebar.locator(".rr-settings-plugin-item").filter({ hasText: "orga" }).first().click();
+		await sidebar.locator(".rr-settings-plugin-item").filter({ hasText: "components" }).first().click();
 
 		// Should show the info card fallback
 		const content = cp.locator(".rr-settings-content");

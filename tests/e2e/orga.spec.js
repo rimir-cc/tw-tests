@@ -5,6 +5,8 @@ test.describe("orga-data-model + orga-tools plugins", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
 		await waitForTW(page);
+		const loaded = await page.evaluate(() => !!$tw.wiki.getTiddler("$:/plugins/rimir/orga-data-model"));
+		test.skip(!loaded, "orga-data-model plugin not installed in this environment (private plugin)");
 	});
 
 	test("orga-data-model plugin is loaded and has type definitions", async ({ page }) => {

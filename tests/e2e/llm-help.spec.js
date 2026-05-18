@@ -95,6 +95,8 @@ test.describe("llm-help plugin", () => {
 	});
 
 	test("data-model help page exists from orga plugin", async ({ page }) => {
+		const orgaLoaded = await page.evaluate(() => !!$tw.wiki.getTiddler("$:/plugins/rimir/orga-data-model"));
+		test.skip(!orgaLoaded, "orga-data-model plugin not installed in this environment (private plugin)");
 		const found = await page.evaluate(() => {
 			const pages = $tw.wiki.filterTiddlers("[all[shadows+tiddlers]tag[$:/tags/rimir/llm-help/page]]");
 			return pages.some(function(t) {
@@ -107,6 +109,8 @@ test.describe("llm-help plugin", () => {
 	});
 
 	test("person type help page exists with dynamic content fields", async ({ page }) => {
+		const orgaLoaded = await page.evaluate(() => !!$tw.wiki.getTiddler("$:/plugins/rimir/orga-data-model"));
+		test.skip(!orgaLoaded, "orga-data-model plugin not installed in this environment (private plugin)");
 		const personPage = await page.evaluate(() => {
 			const pages = $tw.wiki.filterTiddlers("[all[shadows+tiddlers]tag[$:/tags/rimir/llm-help/page]]");
 			for (var i = 0; i < pages.length; i++) {
