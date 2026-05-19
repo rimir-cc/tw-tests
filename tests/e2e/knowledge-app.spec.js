@@ -1,6 +1,14 @@
 const { test, expect } = require("@playwright/test");
 const { waitForTW, navigateToTiddler, createTiddlerInBrowser, deleteTiddlerFromBrowser } = require("./helpers");
 
+// Knowledge-app shape post 0.1.19/0.1.20: mindmap-driven single-pane shell.
+//   layout: topbar-main (was topbar-sidebar-main)
+//   channels: "area note" (section/topic dropped)
+//   sections: home/browse/write/search views deleted; only the mindmap-driven
+//     navigation + the right-pane note view remain
+//   tier-pill procedure dropped
+// See knowledge-app/changelog.tid entries 0.1.19 → 0.1.23.
+
 const APP = "$:/plugins/rimir/knowledge-app/apps/knowledge";
 const NOTE_TAG = "$:/tags/rimir/knowledge-app/note";
 const RENDER_TIDDLER = "KnowledgeAppTestRender";
@@ -18,8 +26,6 @@ const FIXTURE_NOTES = [
 	"orga/cross-link"
 ];
 
-const STATE_TIDDLERS_PREFIX = "$:/state/rimir/knowledge-app/";
-
 test.describe("knowledge-app: registration & static structure", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
@@ -34,20 +40,21 @@ test.describe("knowledge-app: registration & static structure", () => {
 				caption: t.fields.caption,
 				layout: t.fields["appify-layout"],
 				channels: t.fields["appify-channels"],
-				defaultSection: t.fields["appify-default-section"],
 				topbar: t.fields["appify-view-topbar"],
-				sidebar: t.fields["appify-view-sidebar"],
+				main: t.fields["appify-view-main"],
 				tags: (Array.isArray(t.fields.tags) ? t.fields.tags : []).join(" ")
 			};
 		}, APP);
 		expect(app).not.toBeNull();
 		expect(app.caption).toBe("Knowledge");
-		expect(app.layout).toBe("topbar-sidebar-main");
-		expect(app.channels).toContain("section");
+		expect(app.layout).toBe("topbar-main");
 		expect(app.channels).toContain("area");
-		expect(app.channels).toContain("topic");
 		expect(app.channels).toContain("note");
-		expect(app.defaultSection).toBe("home");
+		// Removed in 0.1.19's mindmap-driven redesign:
+		expect(app.channels).not.toContain("section");
+		expect(app.channels).not.toContain("topic");
+		expect(app.topbar).toBe("$:/plugins/rimir/knowledge-app/apps/knowledge-topbar");
+		expect(app.main).toBe("$:/plugins/rimir/knowledge-app/apps/knowledge-main");
 		expect(app.tags).toContain("$:/tags/rimir/appify/app");
 	});
 
@@ -62,14 +69,33 @@ test.describe("knowledge-app: registration & static structure", () => {
 		expect(ids).toContain("llm");
 	});
 
-	test("splits config has the expected views", async ({ page }) => {
-		const splits = await page.evaluate(() => {
-			const t = $tw.wiki.getTiddler("$:/config/rimir/appify/splits/$:/plugins/rimir/knowledge-app/apps/knowledge");
-			return t ? JSON.parse(t.fields.text || "{}") : null;
+	test("mindmap view tiddler has the expected producer and args", async ({ page }) => {
+		const view = await page.evaluate(() => {
+			const t = $tw.wiki.getTiddler("$:/plugins/rimir/knowledge-app/views/knowledge-mindmap-view");
+			if (!t) return null;
+			return {
+				producer: t.fields["mm.producer"],
+				args: t.fields["mm.args"],
+				overlay: t.fields["mm.overlay"],
+				topTemplate: t.fields["mm.preview-top-template"],
+				backlinksFilter: t.fields["mm.backlinks-filter"],
+				outgoingFilter: t.fields["mm.outgoing-filter"]
+			};
 		});
-		expect(splits).not.toBeNull();
-		const labels = splits.main.views.map(v => v.label);
-		expect(labels).toEqual(["Home", "Browse", "Note", "Write", "Search"]);
+		expect(view).not.toBeNull();
+		expect(view.producer).toBe("knowledge-tree");
+		expect(view.overlay).toBe("$:/state/rimir/knowledge-app/mindmap/overlay");
+		expect(view.topTemplate).toBe("$:/plugins/rimir/knowledge-app/templates/preview-top");
+		// mm.args is JSON-stringified — sanity-check the chip-state wiring.
+		const args = JSON.parse(view.args);
+		expect(args["include-areas-root"]).toBe("yes");
+		expect(args["collapse-below-depth"]).toBe("1");
+		expect(args["node-filter"]).toContain("kn-active-node-filter");
+		// Chip state tiddlers are declared as reproduce triggers.
+		expect(args["node-filter-watch"]).toContain("$:/state/rimir/knowledge-app/filter/tiers");
+		expect(args["node-filter-watch"]).toContain("$:/state/rimir/knowledge-app/filter/types");
+		expect(view.backlinksFilter).toContain("ns-backlinks");
+		expect(view.outgoingFilter).toContain("ns-forwardlinks");
 	});
 
 	test("namespace feature flags are enabled by default", async ({ page }) => {
@@ -130,6 +156,14 @@ test.describe("knowledge-app: registration & static structure", () => {
 		const found = await page.evaluate(() => {
 			return typeof $tw.wiki.getFilterOperators === "function" &&
 				!!$tw.wiki.getFilterOperators()["knowledge-has-broken-ref"];
+		});
+		expect(found).toBe(true);
+	});
+
+	test("kn-active-node-filter filter operator is registered", async ({ page }) => {
+		const found = await page.evaluate(() => {
+			return typeof $tw.wiki.getFilterOperators === "function" &&
+				!!$tw.wiki.getFilterOperators()["kn-active-node-filter"];
 		});
 		expect(found).toBe(true);
 	});
@@ -269,9 +303,6 @@ test.describe("knowledge-app: views render", () => {
 
 	test.afterEach(async ({ page }) => {
 		await deleteTiddlerFromBrowser(page, RENDER_TIDDLER).catch(() => {});
-		for (const t of ["knowledge/notes/V1", "knowledge/notes/V2"]) {
-			await deleteTiddlerFromBrowser(page, t).catch(() => {});
-		}
 	});
 
 	test("Note view renders cleanly (placeholder when no note channel)", async ({ page }) => {
@@ -287,29 +318,25 @@ test.describe("knowledge-app: views render", () => {
 		expect(body.toLowerCase()).toContain("pick a note");
 	});
 
-	test("Write view renders the four maintenance columns", async ({ page }) => {
+	test("knowledge-main view renders the filter chip strip and the mindmap pane", async ({ page }) => {
+		// Standalone render outside <$appify-app>: the mindmap widget needs a
+		// statewrap context, but the surrounding wrapper DIVs and the filter
+		// chips render unconditionally and are what we're checking here.
 		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
-			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/views/write" $mode="block"/>'
+			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/apps/knowledge-main" $mode="block"/>'
 		});
 		await navigateToTiddler(page, RENDER_TIDDLER);
 		await page.waitForTimeout(400);
-		const body = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .tc-tiddler-body`).textContent();
-		expect(body).toContain("Orphans");
-		expect(body).toContain("Stubs");
-		expect(body).toContain("Dead-ends");
-		expect(body).toContain("Broken refs");
-	});
-
-	test("Home view shows the maintenance summary headers", async ({ page }) => {
-		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
-			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/views/home" $mode="block"/>'
-		});
-		await navigateToTiddler(page, RENDER_TIDDLER);
-		await page.waitForTimeout(400);
-		const body = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .tc-tiddler-body`).textContent();
-		expect(body).toContain("Knowledge");
-		expect(body).toContain("Recent");
-		expect(body).toContain("Maintenance summary");
+		const frame = page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"]`);
+		// Filter strip + mindmap-pane wrappers should both be in the DOM.
+		await expect(frame.locator(".kn-filter-strip")).toHaveCount(1);
+		await expect(frame.locator(".kn-mindmap-pane")).toHaveCount(1);
+		// The height switcher chips (tight/medium/large — shipped in 0.1.23) live
+		// in the filter strip. medium is the default.
+		const strip = await frame.locator(".kn-filter-strip").textContent();
+		expect(strip).toContain("tight");
+		expect(strip).toContain("medium");
+		expect(strip).toContain("large");
 	});
 });
 
@@ -371,7 +398,7 @@ test.describe("knowledge-app: areas UX", () => {
 		await deleteTiddlerFromBrowser(page, "$:/state/rimir/knowledge-app/area-modal/open").catch(() => {});
 	});
 
-	test("topbar renders without filter errors and shows area pills", async ({ page }) => {
+	test("topbar renders without filter errors and shows area pills + capture buttons", async ({ page }) => {
 		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
 			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/apps/knowledge-topbar" $mode="block"/>'
 		});
@@ -379,17 +406,21 @@ test.describe("knowledge-app: areas UX", () => {
 		await page.waitForTimeout(400);
 		const body = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .tc-tiddler-body`).textContent();
 		expect(body).not.toContain("Filter error");
-		// Section pills
-		expect(body).toContain("Home");
-		expect(body).toContain("Browse");
-		// Area pills (caption + icon)
+		// Area pills (caption — icon comes through too but the text-only assertion is
+		// what matters for cross-platform emoji rendering).
 		expect(body).toContain("LLM");
 		expect(body).toContain("IT Security");
 		expect(body).toContain("Health");
 		expect(body).toContain("Gaming");
-		// Action buttons
+		expect(body).toContain("All");
+		// Capture action buttons.
 		expect(body).toContain("+ Note");
 		expect(body).toContain("+ Area");
+		// Section pills (Home/Browse/Write/Search) were dropped in 0.1.19 — the
+		// mindmap is the only navigation surface now.
+		expect(body).not.toContain("Browse");
+		expect(body).not.toContain("Write");
+		expect(body).not.toContain("Search");
 	});
 
 	test("custom area created via metadata tiddler is discovered", async ({ page }) => {
@@ -449,79 +480,33 @@ test.describe("knowledge-app: card types UX", () => {
 		expect(txt).toContain("💡");
 	});
 
-	test("Browse view renders the type chip row with the shipped types", async ({ page }) => {
+	test("filter-chips procedure renders the type chip row with the shipped types", async ({ page }) => {
+		// Replaces the pre-0.1.19 "Browse view renders the type chip row" test —
+		// the chip row now lives in the mindmap-driven main view's filter strip,
+		// rendered by the `kn-type-filter-chips` procedure.
 		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
-			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/views/browse" $mode="block"/>'
+			text: '\\import $:/plugins/rimir/knowledge-app/procedures/filter-chips\n<<kn-type-filter-chips>>'
 		});
 		await navigateToTiddler(page, RENDER_TIDDLER);
 		await page.waitForTimeout(400);
-		const txt = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .kn-types-row`).textContent();
-		expect(txt).toContain("All");
+		const txt = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .tc-tiddler-body`).textContent();
 		expect(txt).toContain("Idea");
 		expect(txt).toContain("Source");
 		expect(txt).toContain("PAO");
 		expect(txt).toContain("Bibliography");
 		expect(txt).toContain("Tool");
 	});
-});
 
-test.describe("knowledge-app: tier pill cycling", () => {
-	const NOTE = "knowledge/notes/Tier";
-
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await waitForTW(page);
-		await createTiddlerInBrowser(page, NOTE, {
-			tags: NOTE_TAG, "kn.tier": "fleeting", text: ""
-		});
-	});
-	test.afterEach(async ({ page }) => {
-		await deleteTiddlerFromBrowser(page, NOTE).catch(() => {});
-		await deleteTiddlerFromBrowser(page, RENDER_TIDDLER).catch(() => {});
-	});
-
-	test("clicking the pill in interactive mode advances the tier", async ({ page }) => {
+	test("filter-chips procedure renders the tier chip row with the three tiers", async ({ page }) => {
 		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
-			text: '\\import $:/plugins/rimir/knowledge-app/procedures/tier-pill\n<$transclude $variable="kn-tier-pill" noteTitle="' + NOTE + '" interactive="yes" $mode="block"/>'
+			text: '\\import $:/plugins/rimir/knowledge-app/procedures/filter-chips\n<<kn-tier-filter-chips>>'
 		});
 		await navigateToTiddler(page, RENDER_TIDDLER);
-		await page.waitForTimeout(300);
-		const button = page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .kn-tier-pill`).first();
-		await button.click();
-		await page.waitForTimeout(200);
-		const tier1 = await page.evaluate((t) => $tw.wiki.getTiddler(t).fields["kn.tier"], NOTE);
-		expect(tier1).toBe("developing");
-		await button.click();
-		await page.waitForTimeout(200);
-		const tier2 = await page.evaluate((t) => $tw.wiki.getTiddler(t).fields["kn.tier"], NOTE);
-		expect(tier2).toBe("evergreen");
-		await button.click();
-		await page.waitForTimeout(200);
-		const tier3 = await page.evaluate((t) => $tw.wiki.getTiddler(t).fields["kn.tier"], NOTE);
-		expect(tier3).toBe("fleeting");
-	});
-});
-
-test.describe("knowledge-app: search input keystroke regression", () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/");
-		await waitForTW(page);
-	});
-	test.afterEach(async ({ page }) => {
-		await deleteTiddlerFromBrowser(page, RENDER_TIDDLER).catch(() => {});
-		await deleteTiddlerFromBrowser(page, "$:/state/rimir/knowledge-app/search-query").catch(() => {});
-	});
-
-	test("typing several characters preserves focus and accumulates", async ({ page }) => {
-		await createTiddlerInBrowser(page, RENDER_TIDDLER, {
-			text: '<$transclude $tiddler="$:/plugins/rimir/knowledge-app/views/search" $mode="block"/>'
-		});
-		await navigateToTiddler(page, RENDER_TIDDLER);
-		await page.waitForTimeout(300);
-		const input = page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] input.tc-edit-texteditor`).first();
-		await input.click();
-		await input.type("hello", { delay: 50 });
-		const value = await input.inputValue();
-		expect(value).toBe("hello");
+		await page.waitForTimeout(400);
+		const txt = await page.locator(`.tc-tiddler-frame[data-tiddler-title="${RENDER_TIDDLER}"] .tc-tiddler-body`).textContent();
+		// The three tiers — fleeting / developing / evergreen — appear as chip labels.
+		expect(txt.toLowerCase()).toContain("fleeting");
+		expect(txt.toLowerCase()).toContain("developing");
+		expect(txt.toLowerCase()).toContain("evergreen");
 	});
 });

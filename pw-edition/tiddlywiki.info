@@ -26,6 +26,8 @@
         "rimir/statewrap",
         "rimir/appify",
         "rimir/diffsync",
+        "rimir/mindmap",
+        "rimir/mindmap-elixir",
         "rimir/knowledge-app"
     ],
     "themes": [
