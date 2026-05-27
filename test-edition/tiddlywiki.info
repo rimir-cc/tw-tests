@@ -23,6 +23,7 @@
         "rimir/orga-tools",
         "rimir/realms",
         "rimir/runner",
+        "rimir/scribe",
         "rimir/theme",
         "rimir/typed",
         "rimir/statewrap",
