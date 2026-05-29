@@ -1,0 +1,5 @@
+title: ActionHasKindType
+tags: $:/tags/rimir/cascade-palette/action
+ca-applies: [<currentTiddler>has[kind.type]]
+ca-name: Open kind entity
+ca-kind: leaf

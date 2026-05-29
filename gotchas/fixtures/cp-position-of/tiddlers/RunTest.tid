@@ -1,0 +1,15 @@
+title: RunTest
+
+EntryNoPos default: <$list filter="[[EntryNoPos]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntryNoPos by-namespace: <$list filter="[[EntryNoPos]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+EntryBaseOnly default: <$list filter="[[EntryBaseOnly]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntryBaseOnly by-namespace: <$list filter="[[EntryBaseOnly]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+EntrySlugOverride default: <$list filter="[[EntrySlugOverride]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntrySlugOverride by-namespace: <$list filter="[[EntrySlugOverride]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+EntryMulti default: <$list filter="[[EntryMulti]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntryMultiSlug by-namespace: <$list filter="[[EntryMultiSlug]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+EntryNone default: <$list filter="[[EntryNone]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntryNoneSlug default: <$list filter="[[EntryNoneSlug]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+EntryNoneSlug by-namespace: <$list filter="[[EntryNoneSlug]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+EntryBlankSlug by-namespace: <$list filter="[[EntryBlankSlug]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+Missing: <$list filter="[[NoSuchEntry]cp-position-of[default]]" variable=p>[<<p>>] </$list>

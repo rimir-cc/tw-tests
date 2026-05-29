@@ -1,0 +1,7 @@
+title: RunTest
+
+Alice: <$list filter="[cp-actions-applying-to[RowAlice]sort[title]]" variable=t><<t>>,</$list>
+Bob: <$list filter="[cp-actions-applying-to[RowBob]sort[title]]" variable=t><<t>>,</$list>
+KindEntity: <$list filter="[cp-actions-applying-to[RowKindEntity]sort[title]]" variable=t><<t>>,</$list>
+Missing: <$list filter="[cp-actions-applying-to[NoSuchRow]sort[title]]" variable=t><<t>>,</$list>
+Empty: <$list filter="[cp-actions-applying-to[]sort[title]]" variable=t><<t>>,</$list>

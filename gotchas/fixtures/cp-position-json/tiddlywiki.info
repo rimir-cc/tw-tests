@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: ca-position JSON array form resolves identically to legacy colon/newline string form",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

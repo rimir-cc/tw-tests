@@ -1,0 +1,5 @@
+title: ActionTaskClose
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: task
+ca-name: Close task
+ca-kind: leaf

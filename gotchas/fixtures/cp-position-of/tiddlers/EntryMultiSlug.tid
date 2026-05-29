@@ -1,0 +1,6 @@
+title: EntryMultiSlug
+tags: $:/tags/rimir/cascade-palette/entry
+ca-position: BaseP
+ca-position-by-namespace: NsA
+ca-position-by-namespace: NsA:NsB
+ca-name: Entry with multi-value slug position

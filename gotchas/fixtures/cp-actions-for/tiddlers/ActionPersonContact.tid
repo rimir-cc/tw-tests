@@ -1,0 +1,6 @@
+title: ActionPersonContact
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: person
+ca-action-when: [<currentTiddler>has[email]]
+ca-name: Contact person
+ca-kind: leaf

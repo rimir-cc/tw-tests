@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: ca-bind JSON and ca-bind-<key> per-field forms — both shapes parseable from wikitext",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

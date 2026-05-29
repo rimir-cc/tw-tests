@@ -1,0 +1,5 @@
+Alice: ActionHasEmail,ActionHasTagWork,
+Bob: 
+KindEntity: ActionHasKindType,
+Missing: 
+Empty: 

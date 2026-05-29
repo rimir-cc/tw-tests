@@ -1,0 +1,5 @@
+title: ActionPersonEdit
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: person
+ca-name: Edit person
+ca-kind: leaf

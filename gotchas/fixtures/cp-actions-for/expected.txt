@@ -1,0 +1,6 @@
+person: ActionGlobalDelete,ActionGlobalOpen,ActionPersonContact,ActionPersonEdit,
+task: ActionGlobalDelete,ActionGlobalOpen,ActionTaskClose,ActionTaskComplete,
+star: ActionGlobalDelete,ActionGlobalOpen,
+unknown: ActionGlobalDelete,ActionGlobalOpen,
+empty: ActionGlobalDelete,ActionGlobalOpen,
+chained: ActionGlobalDelete,ActionPersonContact,

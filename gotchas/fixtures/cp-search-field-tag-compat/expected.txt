@@ -1,0 +1,11 @@
+legacy-only: UserLegacyTag,
+new-only: UserNewTag,
+union (user only): UserBothTags,UserLegacyTag,UserNewTag,
+dedup-check (counts both-tagged once): 3
+shipped (new tag only): $:/plugins/rimir/cascade-palette/field/aliases
+$:/plugins/rimir/cascade-palette/field/description
+$:/plugins/rimir/cascade-palette/field/hint
+$:/plugins/rimir/cascade-palette/field/name
+$:/plugins/rimir/cascade-palette/field/search-text
+$:/plugins/rimir/cascade-palette/field/text
+

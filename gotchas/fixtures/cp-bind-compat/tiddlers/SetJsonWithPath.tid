@@ -1,0 +1,5 @@
+title: SetJsonWithPath
+tags: $:/tags/rimir/cascade-palette/setting
+ca-name: JSON with sub-path
+ca-kind: text
+ca-bind: {"tiddler":"$:/state/prefs","field":"text","path":"prefs,layout"}

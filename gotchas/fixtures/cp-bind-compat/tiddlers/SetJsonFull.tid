@@ -1,0 +1,5 @@
+title: SetJsonFull
+tags: $:/tags/rimir/cascade-palette/setting
+ca-name: JSON bind shape (full)
+ca-kind: toggle
+ca-bind: {"tiddler":"$:/state/json-full","field":"enabled","type":"text/plain"}

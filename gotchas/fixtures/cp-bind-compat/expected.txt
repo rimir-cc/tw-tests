@@ -1,0 +1,7 @@
+SetLegacy: $:/state/legacy / enabled
+SetJsonFull: {"tiddler":"$:/state/json-full","field":"enabled","type":"text/plain"}
+SetJsonMixed json: {"tiddler":"$:/state/mixed"}
+SetJsonMixed legacy-fallback field: value
+SetJsonWithPath: {"tiddler":"$:/state/prefs","field":"text","path":"prefs,layout"}
+SetJsonInvalid bind: {not-json
+SetJsonInvalid fallback: $:/state/fallback / textSettings loaded: SetJsonFull,SetJsonInvalid,SetJsonMixed,SetJsonWithPath,SetLegacy,

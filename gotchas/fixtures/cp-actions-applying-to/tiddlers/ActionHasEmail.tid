@@ -1,0 +1,5 @@
+title: ActionHasEmail
+tags: $:/tags/rimir/cascade-palette/action
+ca-applies: [<currentTiddler>has[email]]
+ca-name: Email action
+ca-kind: leaf

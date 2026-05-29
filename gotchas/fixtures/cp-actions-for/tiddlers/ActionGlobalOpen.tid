@@ -1,0 +1,5 @@
+title: ActionGlobalOpen
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: *
+ca-name: Open
+ca-kind: leaf

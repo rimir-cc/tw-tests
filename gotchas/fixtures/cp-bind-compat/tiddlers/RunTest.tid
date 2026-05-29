@@ -1,0 +1,13 @@
+title: RunTest
+
+\function bindOf(name) [<name>get[ca-bind]] :else[<name>get[ca-bind-tiddler]addsuffix[ / ]addsuffix{!!ca-bind-field}]
+
+SetLegacy: {{SetLegacy!!ca-bind-tiddler}} / {{SetLegacy!!ca-bind-field}}
+SetJsonFull: {{SetJsonFull!!ca-bind}}
+SetJsonMixed json: {{SetJsonMixed!!ca-bind}}
+SetJsonMixed legacy-fallback field: {{SetJsonMixed!!ca-bind-field}}
+SetJsonWithPath: {{SetJsonWithPath!!ca-bind}}
+SetJsonInvalid bind: {{SetJsonInvalid!!ca-bind}}
+SetJsonInvalid fallback: {{SetJsonInvalid!!ca-bind-tiddler}} / {{SetJsonInvalid!!ca-bind-field}}
+
+Settings loaded: <$list filter="[tag[$:/tags/rimir/cascade-palette/setting]!is[system]sort[title]]" variable=t><<t>>,</$list>

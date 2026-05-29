@@ -1,0 +1,8 @@
+title: RunTest
+
+person: <$list filter="[cp-actions-for[person]sort[title]]" variable=t><<t>>,</$list>
+task: <$list filter="[cp-actions-for[task]sort[title]]" variable=t><<t>>,</$list>
+star: <$list filter="[cp-actions-for[*]sort[title]]" variable=t><<t>>,</$list>
+unknown: <$list filter="[cp-actions-for[nope]sort[title]]" variable=t><<t>>,</$list>
+empty: <$list filter="[cp-actions-for[]sort[title]]" variable=t><<t>>,</$list>
+chained: <$list filter="[cp-actions-for[person]has[ca-action-when]] +[sort[title]]" variable=t><<t>>,</$list>

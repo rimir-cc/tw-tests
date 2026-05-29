@@ -1,0 +1,7 @@
+title: SetJsonInvalid
+tags: $:/tags/rimir/cascade-palette/setting
+ca-name: Invalid JSON — falls back to per-field
+ca-kind: toggle
+ca-bind: {not-json
+ca-bind-tiddler: $:/state/fallback
+ca-bind-field: text

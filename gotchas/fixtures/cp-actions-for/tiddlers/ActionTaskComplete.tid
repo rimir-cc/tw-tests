@@ -1,0 +1,5 @@
+title: ActionTaskComplete
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: task
+ca-name: Complete task
+ca-kind: leaf

@@ -1,0 +1,4 @@
+title: EntryMulti
+tags: $:/tags/rimir/cascade-palette/entry
+ca-position: ParentA:ParentB
+ca-name: Entry with multiple base positions

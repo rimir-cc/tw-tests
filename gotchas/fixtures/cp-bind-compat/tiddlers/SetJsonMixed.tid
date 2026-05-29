@@ -1,0 +1,7 @@
+title: SetJsonMixed
+tags: $:/tags/rimir/cascade-palette/setting
+ca-name: Mixed bind shape — JSON tiddler, legacy field
+ca-kind: toggle
+ca-bind: {"tiddler":"$:/state/mixed"}
+ca-bind-field: value
+ca-bind-type: text/plain

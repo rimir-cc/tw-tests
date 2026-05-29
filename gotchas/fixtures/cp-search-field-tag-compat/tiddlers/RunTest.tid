@@ -1,0 +1,8 @@
+title: RunTest
+
+legacy-only: <$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/field]] -[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/search-field]] +[!prefix[$:/]sort[title]]" variable=t><<t>>,</$list>
+new-only: <$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/search-field]] -[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/field]] +[!prefix[$:/]sort[title]]" variable=t><<t>>,</$list>
+union (user only): <$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/field]] [all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/search-field]] +[!prefix[$:/]sort[title]]" variable=t><<t>>,</$list>
+dedup-check (counts both-tagged once): <$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/field]] [all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/search-field]] +[!prefix[$:/]count[]]" variable=n><<n>></$list>
+shipped (new tag only): <$list filter="[all[shadows+tiddlers]tag[$:/tags/rimir/cascade-palette/search-field]prefix[$:/plugins/rimir/cascade-palette/]sort[title]]" variable=t><<t>>
+</$list>

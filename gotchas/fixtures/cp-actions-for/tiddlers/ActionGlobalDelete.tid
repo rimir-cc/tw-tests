@@ -1,0 +1,6 @@
+title: ActionGlobalDelete
+tags: $:/tags/rimir/cascade-palette/action
+ca-entity-type: *
+ca-action-when: [<currentTiddler>!is[system]]
+ca-name: Delete
+ca-kind: leaf

@@ -1,0 +1,4 @@
+title: EntryJsonSlug
+tags: $:/tags/rimir/cascade-palette/entry
+ca-position: BaseLegacy
+ca-position-by-namespace: ["NsA","NsB"]

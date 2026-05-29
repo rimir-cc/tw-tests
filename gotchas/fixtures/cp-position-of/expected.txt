@@ -1,0 +1,13 @@
+EntryNoPos default: [at-root] 
+EntryNoPos by-namespace: [at-root] 
+EntryBaseOnly default: [ParentA] 
+EntryBaseOnly by-namespace: [ParentA] 
+EntrySlugOverride default: [ParentBase] 
+EntrySlugOverride by-namespace: [NsParent] 
+EntryMulti default: [ParentA] [ParentB] 
+EntryMultiSlug by-namespace: [NsA] [NsB] 
+EntryNone default: 
+EntryNoneSlug default: [ParentX] 
+EntryNoneSlug by-namespace: 
+EntryBlankSlug by-namespace: [ParentP] 
+Missing: [at-root] 

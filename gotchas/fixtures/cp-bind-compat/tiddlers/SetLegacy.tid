@@ -1,0 +1,7 @@
+title: SetLegacy
+tags: $:/tags/rimir/cascade-palette/setting
+ca-name: Legacy bind shape
+ca-kind: toggle
+ca-bind-tiddler: $:/state/legacy
+ca-bind-field: enabled
+ca-bind-type: text/plain

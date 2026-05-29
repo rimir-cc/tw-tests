@@ -1,0 +1,5 @@
+title: EntrySlugOverride
+tags: $:/tags/rimir/cascade-palette/entry
+ca-position: ParentBase
+ca-position-by-namespace: NsParent
+ca-name: Entry with slug override

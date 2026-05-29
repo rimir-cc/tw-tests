@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: cp-actions-applying-to filter operator — evaluates each ca-applies filter against input title",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

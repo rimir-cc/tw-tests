@@ -17,6 +17,7 @@
         "rimir/minver",
         "rimir/namespace",
         "rimir/base-data-model",
+        "rimir/cascade-palette",
         "rimir/orga-data-model",
         "rimir/orga-tools",
         "rimir/realms",

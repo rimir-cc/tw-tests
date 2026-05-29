@@ -1,0 +1,5 @@
+title: EntryNoneSlug
+tags: $:/tags/rimir/cascade-palette/entry
+ca-position: ParentX
+ca-position-by-namespace: none
+ca-name: Entry excluded only from by-namespace view

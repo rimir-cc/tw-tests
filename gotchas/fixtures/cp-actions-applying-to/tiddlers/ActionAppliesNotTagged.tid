@@ -1,0 +1,4 @@
+title: ActionAppliesNotTagged
+ca-applies: [<currentTiddler>has[email]]
+ca-name: Has applies but not tagged as action
+ca-kind: leaf

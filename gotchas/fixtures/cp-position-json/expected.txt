@@ -1,0 +1,8 @@
+LegacyColon: [ParentA] [ParentB] 
+JsonArray: [ParentA] [ParentB] 
+JsonSingle: [SoloParent] 
+JsonEmpty: [at-root] 
+JsonSlug base: [BaseLegacy] 
+JsonSlug by-namespace: [NsA] [NsB] 
+JsonNumeric: [P1] [P2] [P3] 
+JsonInvalid (legacy fallback): [[not valid json] 

@@ -18,6 +18,8 @@
         "rimir/llm-help",
         "rimir/minver",
         "rimir/base-data-model",
+        "rimir/cascade-palette",
+        "rimir/kind",
         "rimir/orga-data-model",
         "rimir/orga-apps",
         "rimir/orga-tools",

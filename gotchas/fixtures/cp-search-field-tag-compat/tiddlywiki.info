@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: search-in pill loader reads UNION of legacy 'field' tag and new 'search-field' tag",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

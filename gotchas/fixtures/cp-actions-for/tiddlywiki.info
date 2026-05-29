@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: cp-actions-for filter operator — catalogue + globals match on ca-entity-type",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

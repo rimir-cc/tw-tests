@@ -1,0 +1,10 @@
+title: RunTest
+
+LegacyColon: <$list filter="[[EntryLegacyColon]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonArray: <$list filter="[[EntryJsonArray]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonSingle: <$list filter="[[EntryJsonSingle]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonEmpty: <$list filter="[[EntryJsonEmpty]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonSlug base: <$list filter="[[EntryJsonSlug]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonSlug by-namespace: <$list filter="[[EntryJsonSlug]cp-position-of[by-namespace]]" variable=p>[<<p>>] </$list>
+JsonNumeric: <$list filter="[[EntryJsonNumeric]cp-position-of[default]]" variable=p>[<<p>>] </$list>
+JsonInvalid (legacy fallback): <$list filter="[[EntryJsonInvalid]cp-position-of[default]]" variable=p>[<<p>>] </$list>

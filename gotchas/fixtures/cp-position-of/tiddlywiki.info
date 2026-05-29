@@ -1,0 +1,7 @@
+{
+    "description": "Gotcha: cp-position-of filter operator — view-aware fallback chain ca-position-<slug> > ca-position > at-root",
+    "plugins": [
+        "rimir/cascade-palette"
+    ],
+    "themes": ["tiddlywiki/vanilla"]
+}

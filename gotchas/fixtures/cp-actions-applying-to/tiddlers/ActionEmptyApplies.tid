@@ -1,0 +1,5 @@
+title: ActionEmptyApplies
+tags: $:/tags/rimir/cascade-palette/action
+ca-applies:
+ca-name: Empty applies (should not surface)
+ca-kind: leaf
