@@ -1,5 +1,7 @@
 const { test, expect } = require("@playwright/test");
-const { waitForTW } = require("./helpers");
+const {
+	waitForTW, isPaletteOpen, openPalette, closePaletteIfOpen,
+} = require("./helpers");
 
 /**
  * Cascade-palette e2e — keyboard, drill, preset roundtrip.
@@ -21,36 +23,9 @@ const { waitForTW } = require("./helpers");
  *   .rcp-row.rcp-row-selected           highlighted row
  */
 
-async function isOpen(page) {
-	return await page.evaluate(() => {
-		var bp = document.querySelector(".rcp-backdrop");
-		return !!(bp && bp.style.display === "flex");
-	});
-}
-
-async function openPalette(page) {
-	await page.evaluate(() => {
-		$tw.rootWidget.dispatchEvent({ type: "rimir-cascade-palette-open" });
-	});
-	await page.waitForFunction(() => {
-		var bp = document.querySelector(".rcp-backdrop");
-		return !!(bp && bp.style.display === "flex");
-	}, { timeout: 5000 });
-}
-
-async function closePaletteIfOpen(page) {
-	await page.evaluate(() => {
-		var bp = document.querySelector(".rcp-backdrop");
-		if (bp && bp.style.display === "flex") {
-			var input = document.querySelector(".rcp-input");
-			if (input) {
-				input.dispatchEvent(new KeyboardEvent("keydown", {
-					key: "Escape", bubbles: true
-				}));
-			}
-		}
-	});
-}
+// open / close / isOpen helpers live in ./helpers (shared with the
+// lens / nav / structure / extras specs); `isOpen` is the local alias.
+const isOpen = isPaletteOpen;
 
 test.describe("cascade-palette", () => {
 	test.beforeEach(async ({ page }) => {

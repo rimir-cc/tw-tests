@@ -114,6 +114,71 @@ async function deleteTiddlerFromBrowser(page, title) {
 	await page.evaluate((t) => $tw.wiki.deleteTiddler(t), title);
 }
 
+/* ---------------------------------------------------------------------------
+ * cascade-palette helpers
+ *
+ * The palette mounts at document.body (#rimir-cascade-palette-mount) and
+ * opens via the `rimir-cascade-palette-open` message on $tw.rootWidget.
+ * Visibility = `.rcp-backdrop` style display:flex (open) / none (closed).
+ * The popup listens for `keydown` and events bubble, so we drive the real
+ * cp-keyboard dispatcher by dispatching bubbling KeyboardEvents on the input.
+ * ------------------------------------------------------------------------- */
+
+async function isPaletteOpen(page) {
+	return await page.evaluate(() => {
+		var bp = document.querySelector(".rcp-backdrop");
+		return !!(bp && bp.style.display === "flex");
+	});
+}
+
+async function openPalette(page) {
+	await page.evaluate(() => {
+		$tw.rootWidget.dispatchEvent({ type: "rimir-cascade-palette-open" });
+	});
+	await page.waitForFunction(() => {
+		var bp = document.querySelector(".rcp-backdrop");
+		return !!(bp && bp.style.display === "flex");
+	}, { timeout: 5000 });
+}
+
+async function closePaletteIfOpen(page) {
+	await page.evaluate(() => {
+		var bp = document.querySelector(".rcp-backdrop");
+		if (bp && bp.style.display === "flex") {
+			var input = document.querySelector(".rcp-input");
+			if (input) {
+				input.dispatchEvent(new KeyboardEvent("keydown", {
+					key: "Escape", bubbles: true,
+				}));
+			}
+		}
+	});
+}
+
+/**
+ * Dispatch a single bubbling keydown into the palette (drives the real
+ * cp-keyboard dispatcher regardless of which section holds `this.focus`).
+ * opts: { shiftKey, ctrlKey, altKey, metaKey }.
+ */
+async function paletteKey(page, key, opts = {}) {
+	await page.evaluate(({ key, opts }) => {
+		var el = document.querySelector(".rcp-input") ||
+			document.querySelector(".rcp-popup");
+		if (!el) return;
+		el.dispatchEvent(new KeyboardEvent("keydown", Object.assign({
+			key: key, bubbles: true, cancelable: true,
+		}, opts)));
+	}, { key, opts });
+}
+
+/**
+ * Set the search input value and let the debounced re-render settle.
+ */
+async function paletteType(page, text) {
+	await page.locator(".rcp-input").fill(text);
+	await page.waitForTimeout(200);
+}
+
 module.exports = {
 	waitForTW,
 	createTiddler,
@@ -125,4 +190,9 @@ module.exports = {
 	saveDraft,
 	createTiddlerInBrowser,
 	deleteTiddlerFromBrowser,
+	isPaletteOpen,
+	openPalette,
+	closePaletteIfOpen,
+	paletteKey,
+	paletteType,
 };
