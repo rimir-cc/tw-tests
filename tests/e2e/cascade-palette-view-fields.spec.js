@@ -38,13 +38,13 @@ async function purge(page) {
 					$tw.wiki.deleteTiddler(t);
 				}
 			});
-		$tw.wiki.filterTiddlers("[all[tiddlers]tag[$:/tags/rimir/cascade-palette/structure-layer]]")
+		$tw.wiki.filterTiddlers("[all[tiddlers]tag[$:/tags/rimir/cascade-palette/channel]]")
 			.forEach((t) => {
-				if (/^ZVFLayer/.test((($tw.wiki.getTiddler(t) || { fields: {} }).fields["ca-layer-name"]) || "")) {
+				if (/^ZVFChannel/.test((($tw.wiki.getTiddler(t) || { fields: {} }).fields["ca-channel-name"]) || "")) {
 					$tw.wiki.deleteTiddler(t);
 				}
 			});
-		["$:/zvf/view", "$:/zvf/view2", "$:/zvf/layer", "ZVFData1"].forEach((t) => $tw.wiki.deleteTiddler(t));
+		["$:/zvf/view", "$:/zvf/view2", "$:/zvf/channel", "ZVFData1"].forEach((t) => $tw.wiki.deleteTiddler(t));
 	});
 }
 
@@ -72,7 +72,7 @@ test.describe("cascade-palette view field editor", () => {
 		await createTiddlerInBrowser(page, "$:/zvf/view", {
 			tags: [VIEW_TAG], type: "text/vnd.tiddlywiki",
 			"ca-view-name": "ZVFView", "ca-view-roots": "[tag[ZVFData]]",
-			// Force the entries layer so the command menu stays reachable at
+			// Force the entries channel so the command menu stays reachable at
 			// root on this otherwise-flat view (flat views don't auto-append it).
 			"ca-view-include-entries": "yes",
 		});
@@ -101,15 +101,15 @@ test.describe("cascade-palette view field editor", () => {
 		expect(["yes", "no"]).toContain(after);
 	});
 
-	test("an explicit-layer view drills each layer into its own field editor", async ({ page }) => {
-		const BUILTIN = "$:/plugins/rimir/cascade-palette/structure-layers/entries";
-		await createTiddlerInBrowser(page, "$:/zvf/layer", {
-			tags: ["$:/tags/rimir/cascade-palette/structure-layer"], type: "text/vnd.tiddlywiki",
-			"ca-layer-name": "ZVFLayer", "ca-layer-roots": "[tag[ZVFData]]",
+	test("an explicit-channel view drills each channel into its own field editor", async ({ page }) => {
+		const BUILTIN = "$:/plugins/rimir/cascade-palette/channels/entries";
+		await createTiddlerInBrowser(page, "$:/zvf/channel", {
+			tags: ["$:/tags/rimir/cascade-palette/channel"], type: "text/vnd.tiddlywiki",
+			"ca-channel-name": "ZVFChannel", "ca-channel-roots": "[tag[ZVFData]]",
 		});
 		await createTiddlerInBrowser(page, "$:/zvf/view2", {
 			tags: [VIEW_TAG], type: "text/vnd.tiddlywiki",
-			"ca-view-name": "ZVFView2", "ca-view-layers": BUILTIN + " $:/zvf/layer",
+			"ca-view-name": "ZVFView2", "ca-view-channels": BUILTIN + " $:/zvf/channel",
 		});
 		await createTiddlerInBrowser(page, "ZVFData1", { tags: ["ZVFData"], text: "x" });
 
@@ -118,13 +118,13 @@ test.describe("cascade-palette view field editor", () => {
 		await openManageViews(page);
 		await editAllFields(page);
 
-		// A "layer: ZVFLayer" drill row appears (entries layer excluded).
-		const layerRow = page.locator(".rcp-results .rcp-row", { hasText: "layer: ZVFLayer" }).first();
-		await expect(layerRow).toBeVisible();
-		await layerRow.click();
+		// A "channel: ZVFChannel" drill row appears (entries channel excluded).
+		const channelRow = page.locator(".rcp-results .rcp-row", { hasText: "channel: ZVFChannel" }).first();
+		await expect(channelRow).toBeVisible();
+		await channelRow.click();
 		await page.waitForTimeout(200);
 
-		// Its long-tail layer facets render.
+		// Its long-tail channel facets render.
 		for (const label of ["name", "source", "row-icon", "include-position"]) {
 			await expect(
 				page.locator(".rcp-results .rcp-row", { hasText: label }).first()
