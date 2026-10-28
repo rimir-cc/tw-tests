@@ -12,6 +12,7 @@
         "rimir/filesystem-watcher",
         "tiddlywiki/markdown",
         "rimir/frontmatter",
+        "rimir/okf",
         "rimir/git-int",
         "rimir/json-dsl",
         "rimir/llm-connect",

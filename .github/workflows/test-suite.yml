@@ -78,7 +78,7 @@ jobs:
           PLUGINS=(
             appify capture components core-hook cytoscape-engine diffsync
             doc-template explide ext-connect external-llm-help file-pipeline
-            file-upload filesystem-watcher frontmatter git-int json-dsl
+            file-upload filesystem-watcher frontmatter git-int json-dsl okf
             knowledge-app llm-connect llm-help mindmap mindmap-elixir minver
             msg-import namespace present realms runner scattered-binaries
             statewrap theme typed
