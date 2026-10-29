@@ -21,6 +21,7 @@
         "rimir/base-data-model",
         "rimir/cascade-palette",
         "rimir/kind",
+        "rimir/ports",
         "rimir/orga-data-model",
         "rimir/orga-apps",
         "rimir/orga-tools",
