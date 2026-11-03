@@ -29,10 +29,11 @@ async function drillRow(page, text) {
 
 async function openManageAxes(page) {
 	await openPalette(page);
-	// Root-menu entries display their tiddler title; narrow to the single
+	// Root-menu entries show their caption or tiddler title (depending on the
+	// active name lens); narrow to the single
 	// "manage-axes" entry and click it.
 	await paletteType(page, "Manage ax");
-	const entry = page.locator(".rcp-results .rcp-row", { hasText: "manage-axes" }).first();
+	const entry = page.locator(".rcp-results .rcp-row", { hasText: /manage-axes|Manage axes/ }).first();
 	await expect(entry).toBeVisible();
 	await entry.click();
 	await page.waitForTimeout(150);

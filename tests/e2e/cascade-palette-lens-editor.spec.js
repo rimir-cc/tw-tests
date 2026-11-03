@@ -34,11 +34,12 @@ async function drillRow(page, text) {
 
 async function openManageLenses(page) {
 	await openPalette(page);
-	// Root-menu entries display their tiddler title (the search still matches
+	// Root-menu entries show their caption or tiddler title, depending on the
+	// active name lens (the search still matches
 	// ca-name/hint), so narrow to the single "manage-lenses" entry and click
 	// it rather than matching its display text.
 	await paletteType(page, "Manage lens");
-	const entry = page.locator(".rcp-results .rcp-row", { hasText: "manage-lenses" }).first();
+	const entry = page.locator(".rcp-results .rcp-row", { hasText: /manage-lenses|Manage lenses/ }).first();
 	await expect(entry).toBeVisible();
 	await entry.click();
 	await page.waitForTimeout(150);

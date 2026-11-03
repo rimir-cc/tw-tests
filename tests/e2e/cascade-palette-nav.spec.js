@@ -25,7 +25,7 @@ test.describe("cascade-palette navigation", () => {
 		await openPalette(page);
 		// Root → Manage lenses (a known drill) → its sub-list.
 		await paletteType(page, "Manage lens");
-		await page.locator(".rcp-results .rcp-row", { hasText: "manage-lenses" }).first().click();
+		await page.locator(".rcp-results .rcp-row", { hasText: /manage-lenses|Manage lenses/ }).first().click();
 		await page.waitForTimeout(150);
 		// Sub-stage rows (the lens creator rows) are now shown.
 		await expect(
@@ -39,7 +39,7 @@ test.describe("cascade-palette navigation", () => {
 		await paletteKey(page, "Escape");
 		await page.waitForTimeout(150);
 		await expect(
-			page.locator(".rcp-results .rcp-row", { hasText: "manage-lenses" }).first()
+			page.locator(".rcp-results .rcp-row", { hasText: /manage-lenses|Manage lenses/ }).first()
 		).toBeVisible();
 		await expect(
 			page.locator(".rcp-results .rcp-row", { hasText: "+ New name lens" })
