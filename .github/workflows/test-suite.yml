@@ -81,7 +81,7 @@ jobs:
             file-upload filesystem-watcher frontmatter git-int json-dsl okf
             knowledge-app llm-connect llm-help mindmap mindmap-elixir minver
             msg-import namespace present realms runner scattered-binaries
-            statewrap theme typed kind ports
+            statewrap theme typed kind ports cascade-palette
           )
           for p in "${PLUGINS[@]}"; do
             echo "  cloning $p"
