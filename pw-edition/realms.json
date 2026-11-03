@@ -2,7 +2,7 @@
     "work": {
         "filter": "[prefix[WorkNote]]",
         "description": "Work tiddlers",
-        "active": false
+        "active": true
     },
     "private": {
         "filter": "[prefix[PrivateNote]]",
