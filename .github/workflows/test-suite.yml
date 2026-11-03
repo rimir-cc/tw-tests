@@ -83,10 +83,11 @@ jobs:
             msg-import namespace present realms runner scattered-binaries
             statewrap theme typed kind ports cascade-palette
           )
-          for p in "${PLUGINS[@]}"; do
-            echo "  cloning $p"
-            git clone --depth 1 "https://github.com/rimir-cc/tw-${p}.git" "dev-wiki/plugins/rimir/${p}" 2>&1 | sed 's/^/    /'
-          done
+          # 8 clones at a time, each cut off after 3 min (a hung clone used to stall
+          # the build); xargs exits non-zero if any clone fails or times out
+          printf '%s\n' "${PLUGINS[@]}" | xargs -P 8 -I{} \
+            timeout 180 git clone -q --depth 1 "https://github.com/rimir-cc/tw-{}.git" "dev-wiki/plugins/rimir/{}"
+          ls dev-wiki/plugins/rimir
 
       - name: Stage flibbles fixtures for namespace test-edition
         # namespace/test-edition/tiddlers/tiddlywiki.files references
