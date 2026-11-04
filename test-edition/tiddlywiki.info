@@ -22,6 +22,7 @@
         "rimir/cascade-palette",
         "rimir/kind",
         "rimir/ports",
+        "rimir/drop-attach",
         "rimir/orga-data-model",
         "rimir/orga-apps",
         "rimir/orga-tools",
