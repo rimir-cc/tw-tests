@@ -23,6 +23,7 @@
         "rimir/kind",
         "rimir/ports",
         "rimir/drop-attach",
+        "rimir/derived-view",
         "rimir/orga-data-model",
         "rimir/orga-apps",
         "rimir/orga-tools",
