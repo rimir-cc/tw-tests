@@ -23,6 +23,7 @@
         "rimir/realms",
         "rimir/runner",
         "rimir/theme",
+        "rimir/work-focus",
         "rimir/typed",
         "rimir/statewrap",
         "rimir/appify",
