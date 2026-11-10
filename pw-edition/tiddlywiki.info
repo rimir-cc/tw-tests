@@ -24,6 +24,8 @@
         "rimir/runner",
         "rimir/theme",
         "rimir/work-focus",
+        "rimir/kind",
+        "rimir/kind-work-focus",
         "rimir/typed",
         "rimir/statewrap",
         "rimir/appify",

@@ -81,7 +81,7 @@ jobs:
             file-upload filesystem-watcher frontmatter git-int json-dsl okf
             knowledge-app llm-connect llm-help mindmap mindmap-elixir minver
             msg-import namespace present realms runner scattered-binaries
-            statewrap theme typed kind ports cascade-palette drop-attach work-focus
+            statewrap theme typed kind ports cascade-palette drop-attach work-focus kind-work-focus
           )
           # 8 clones at a time, each cut off after 3 min (a hung clone used to stall
           # the build); xargs exits non-zero if any clone fails or times out

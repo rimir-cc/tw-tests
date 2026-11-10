@@ -24,6 +24,7 @@
         "rimir/ports",
         "rimir/drop-attach",
         "rimir/work-focus",
+        "rimir/kind-work-focus",
         "rimir/orga-data-model",
         "rimir/orga-apps",
         "rimir/orga-tools",
