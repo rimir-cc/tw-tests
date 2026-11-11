@@ -276,8 +276,8 @@ test.describe("work-focus dock and panel", () => {
 		}, { ITEM, later });
 		await check(page);
 		await page.evaluate(({ ITEM, AREA }) => {
-			$tw.wiki.setTiddlerData("$:/temp/rimir/work-focus/acted", { [ITEM + "n1"]: { area: AREA + "alert", mark: "→ Fri" },
-				[ITEM + "n8"]: { area: AREA + "alert", mark: "🔕 until Mon 9" } });
+			$tw.wiki.setTiddlerData("$:/temp/rimir/work-focus/acted", { [AREA + "alert"]: { [ITEM + "n1"]: "→ Fri",
+				[ITEM + "n8"]: "🔕 until Mon 9" } });
 		}, { ITEM, AREA });
 		await expect(chips(page).first()).toContainText("7");
 		await page.locator(".wf-dock-toggle").click();
@@ -298,7 +298,7 @@ test.describe("work-focus dock and panel", () => {
 		expect(Object.keys(mutes)).toHaveLength(0);
 		// unmute also drops the item's acted mark: the row is a plain row again, not struck through
 		const actedNow = await page.evaluate(() => $tw.wiki.getTiddlerData("$:/temp/rimir/work-focus/acted", {}));
-		expect(Object.keys(actedNow)).toEqual([ITEM + "n1"]);
+		expect(actedNow).toEqual({ [AREA + "alert"]: { [ITEM + "n1"]: "→ Fri" } });
 		await expect(panel.locator(`.wf-item[data-wf-item="${ITEM}n8"]:not(.wf-acted)`)).toHaveCount(1);
 	});
 
@@ -498,7 +498,7 @@ test.describe("work-focus ring", () => {
 		await expect(acted).toContainText("→");
 		await expect(acted.locator(".wf-item-label")).toHaveCSS("text-decoration-line", "line-through");
 		const data = await page.evaluate((a) => $tw.wiki.getTiddlerData(a, {}), ACTED);
-		expect(Object.keys(data)).toEqual([title]);
+		expect(data).toEqual({ [AREA + "alert"]: { [title]: expect.stringContaining("→") } });
 		// the click after the release neither closed the panel nor opened the item
 		await expect(page.locator(".wf-panel")).toHaveCount(1);
 		expect(await page.evaluate(() => $tw.wiki.getTiddlerList("$:/StoryList"))).not.toContain(title);
@@ -575,7 +575,7 @@ test.describe("work-focus ring", () => {
 		await hover(page, day(page, "+1d"), 50);
 		await page.mouse.up();
 		expect(await page.evaluate((t) => $tw.wiki.getTiddler(t).fields.due, title)).toBe(tomorrow);
-		expect(Object.keys(await page.evaluate((a) => $tw.wiki.getTiddlerData(a, {}), ACTED))).toEqual([title]);
+		expect(Object.keys((await page.evaluate((a) => $tw.wiki.getTiddlerData(a, {}), ACTED))[AREA + "alert"])).toEqual([title]);
 		await expect(page.locator(".wf-panel .wf-item.wf-acted")).toHaveAttribute("data-wf-item", title);
 	});
 
