@@ -653,7 +653,8 @@ test.describe("llm-connect plugin", () => {
 			await expect(row.locator(".llm-conn-name")).toHaveText(NAME);
 			await expect(row.locator(".llm-conn-type")).toHaveText("OpenAI-compatible");
 			const stored = await page.evaluate(({CONN, id}) => $tw.wiki.getTiddler(CONN + id).fields, {CONN, id});
-			expect(stored["connection-id"]).toBe(id);
+			// the id lives in the title only
+			expect(stored["connection-id"]).toBeUndefined();
 			expect(stored["connection-name"]).toBe(NAME);
 			expect(stored["connection-type"]).toBe("openai-compatible");
 
@@ -707,6 +708,33 @@ test.describe("llm-connect plugin", () => {
 			}), {CONN, KEYS, id});
 			expect(after).toEqual({conn: false, key: false, def: false});
 			await expect(body.locator('.llm-conn[data-connection="cloud"]')).toHaveCount(1);
+		});
+
+		test("the first connection becomes the default; Make default shows while the default is not stored", async ({ page }) => {
+			await page.evaluate(({CONN}) => {
+				$tw.wiki.allTitles().filter(t => t.indexOf(CONN) === 0).forEach(t => $tw.wiki.deleteTiddler(t));
+				$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/default-connection");
+			}, {CONN});
+			const frame = await openSettings(page);
+			const body = frame.locator(".rr-settings-tabs-body");
+			await body.locator(".llm-conn-add-btn").click();
+			await body.locator("select.llm-conn-add-type").selectOption("claude");
+			await body.locator("input.llm-conn-add-name").fill("First");
+			await body.locator(".llm-conn-add-create").click();
+			const id = await page.evaluate((CONN) =>
+				$tw.wiki.filterTiddlers("[all[tiddlers]prefix[" + CONN + "]]").map(t => t.substr(CONN.length))[0], CONN);
+			expect(await page.evaluate(() => $tw.wiki.getTiddlerText("$:/config/rimir/llm-connect/default-connection"))).toBe(id);
+			const row = body.locator('.llm-conn[data-connection="' + id + '"]');
+			await expect(row.locator(".llm-conn-default")).toBeVisible();
+			await expect(row.locator(".llm-conn-make-default")).toHaveCount(0);
+
+			// default only by fallback (nothing stored): badge stays, Make default is offered
+			await page.evaluate(() => $tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/default-connection"));
+			await expect(row.locator(".llm-conn-default")).toBeVisible();
+			await expect(row.locator(".llm-conn-make-default")).toBeVisible();
+			await row.locator(".llm-conn-make-default").click();
+			expect(await page.evaluate(() => $tw.wiki.getTiddlerText("$:/config/rimir/llm-connect/default-connection"))).toBe(id);
+			await expect(row.locator(".llm-conn-make-default")).toHaveCount(0);
 		});
 
 		test("Routing lists each connection's cheap and expensive models", async ({ page }) => {
