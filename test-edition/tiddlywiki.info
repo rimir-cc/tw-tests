@@ -17,6 +17,7 @@
         "rimir/json-dsl",
         "rimir/llm-connect",
         "rimir/llm-help",
+        "rimir/llm-inline",
         "rimir/minver",
         "rimir/base-data-model",
         "rimir/cascade-palette",
