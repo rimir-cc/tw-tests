@@ -162,6 +162,7 @@ test.describe("llm-connect plugin", () => {
 		await cp.locator(".rr-settings-sidebar .rr-settings-plugin-item").filter({ hasText: /llm.connect/i }).click();
 
 		const content = cp.locator(".rr-settings-content");
+		await content.locator(".rr-settings-tabs-strip .rr-settings-tab").filter({ hasText: "Tools" }).click();
 		// Should have the tools table with built-in tools
 		const toolTable = content.locator(".llm-tool-table");
 		await expect(toolTable).toBeVisible();
@@ -546,5 +547,190 @@ test.describe("llm-connect plugin", () => {
 				await deleteTiddlerFromBrowser(page, "LlmChatTest");
 			});
 
+	});
+
+	test.describe("settings tabs", () => {
+		const SETTINGS = "$:/plugins/rimir/llm-connect/settings";
+		const CONN = "$:/config/rimir/llm-connect/connections/";
+		const CONN_TAG = "$:/tags/rimir/llm-connect/connection";
+		const KEYS = "$:/config/rimir/llm-connect/keys/";
+		const NAME = 'My "llama" [[x]]';
+
+		test.afterEach(async ({ page }) => {
+			await page.evaluate(() => {
+				const prefixes = ["$:/config/rimir/llm-connect/connections/", "$:/config/rimir/llm-connect/keys/",
+					"$:/temp/rimir/llm-connect/models/", "$:/temp/rimir/llm-connect/fetch-status/",
+					"$:/state/rimir/llm-connect/connection-", "$:/temp/rimir/llm-connect/add-connection"];
+				$tw.wiki.allTitles().forEach(function(t) {
+					if (prefixes.some(function(p) { return t.indexOf(p) === 0; })) $tw.wiki.deleteTiddler(t);
+				});
+				["$:/config/rimir/llm-connect/default-connection", "$:/state/rimir/llm-connect/settings-tab",
+					"LlmChatTest"].forEach(function(t) { $tw.wiki.deleteTiddler(t); });
+				const story = $tw.wiki.getTiddlerList("$:/StoryList").filter(function(t) {
+					return t !== "$:/plugins/rimir/llm-connect/settings";
+				});
+				$tw.wiki.addTiddler({title: "$:/StoryList", text: "", list: $tw.utils.stringifyList(story)});
+			});
+			await page.waitForFunction(() => !$tw.syncer.isDirty());
+		});
+
+		async function openSettings(page) {
+			await navigateToTiddler(page, SETTINGS);
+			return page.locator('.tc-tiddler-frame[data-tiddler-title="' + SETTINGS + '"]');
+		}
+
+		async function openTab(frame, caption) {
+			await frame.locator(".rr-settings-tabs-strip .rr-settings-tab").filter({ hasText: caption }).click();
+			await expect(frame.locator(".rr-settings-tab-active")).toHaveText(caption);
+		}
+
+		test("tabs are Connections Routing Safety Files Prompt Tools in that order", async ({ page }) => {
+			const frame = await openSettings(page);
+			await expect(frame.locator(".rr-settings-tabs-strip .rr-settings-tab"))
+				.toHaveText(["Connections", "Routing", "Safety", "Files", "Prompt", "Tools"]);
+			await expect(frame.locator(".rr-settings-tab-active")).toHaveText("Connections");
+		});
+
+		test("Files tab short inputs are narrower than 150px", async ({ page }) => {
+			const frame = await openSettings(page);
+			await openTab(frame, "Files");
+			const shorts = frame.locator(".rr-settings-tabs-body input.rr-config-input-short");
+			const n = await shorts.count();
+			expect(n).toBeGreaterThanOrEqual(3);
+			for (let i = 0; i < n; i++) {
+				const box = await shorts.nth(i).boundingBox();
+				expect(box.width).toBeLessThan(150);
+			}
+		});
+
+		test("old settings sections are gone and every tab renders without errors", async ({ page }) => {
+			const frame = await openSettings(page);
+			for (const caption of ["Connections", "Routing", "Safety", "Files", "Prompt", "Tools"]) {
+				await openTab(frame, caption);
+				const body = frame.locator(".rr-settings-tabs-body");
+				await expect(body).not.toContainText("Filter error");
+				await expect(body).not.toContainText("\\procedure");
+				await expect(body).not.toContainText("Default model");
+			}
+			await expect(frame.locator(".llm-default-model-provider-select")).toHaveCount(0);
+		});
+
+		test("add, configure, make default and delete a connection", async ({ page }) => {
+			await page.evaluate(({CONN, CONN_TAG, KEYS}) => {
+				$tw.wiki.addTiddler({title: CONN + "cloud", tags: CONN_TAG, "connection-id": "cloud", "connection-name": "Cloud",
+					"connection-type": "claude", model: "claude-x"});
+				$tw.wiki.addTiddler({title: KEYS + "cloud", text: "sk-test"});
+				$tw.wiki.addTiddler({title: "$:/config/rimir/llm-connect/default-connection", text: "cloud"});
+			}, {CONN, CONN_TAG, KEYS});
+			const frame = await openSettings(page);
+			const body = frame.locator(".rr-settings-tabs-body");
+			await expect(body.locator('.llm-conn[data-connection="cloud"] .llm-conn-default')).toBeVisible();
+
+			// add
+			await body.locator(".llm-conn-add-btn").click();
+			const typeSelect = body.locator("select.llm-conn-add-type");
+			// listTypes order (by caption)
+			const expectedTypes = await page.evaluate(() =>
+				$tw.modules.execute("$:/plugins/rimir/llm-connect/connection-types").listTypes().map(t => t.caption));
+			expect(expectedTypes).toEqual(expect.arrayContaining(["Azure OpenAI", "Claude", "OpenAI", "OpenAI-compatible"]));
+			await expect(typeSelect.locator("option")).toHaveText(expectedTypes);
+			await typeSelect.selectOption("openai-compatible");
+			await body.locator("input.llm-conn-add-name").fill(NAME);
+			await body.locator(".llm-conn-add-create").click();
+
+			const id = await page.evaluate((CONN) => {
+				return $tw.wiki.filterTiddlers("[all[tiddlers]prefix[" + CONN + "]]").map(t => t.substr(CONN.length)).filter(i => i !== "cloud")[0];
+			}, CONN);
+			expect(id).toMatch(/^c\d{17}$/);
+			const row = body.locator('.llm-conn[data-connection="' + id + '"]');
+			await expect(row.locator(".llm-conn-name")).toHaveText(NAME);
+			await expect(row.locator(".llm-conn-type")).toHaveText("OpenAI-compatible");
+			const stored = await page.evaluate(({CONN, id}) => $tw.wiki.getTiddler(CONN + id).fields, {CONN, id});
+			expect(stored["connection-id"]).toBe(id);
+			expect(stored["connection-name"]).toBe(NAME);
+			expect(stored["connection-type"]).toBe("openai-compatible");
+
+			// editor is open; fields of the type in display order, key is a password input
+			const editor = row.locator(".llm-conn-editor");
+			await expect(editor).toBeVisible();
+			await expect(editor.locator(".llm-conn-field")).toHaveText([/Endpoint/, /API key/, /Model/, /Max tokens/]);
+			const keyInput = editor.locator('.llm-conn-field[data-field="api-key"] input');
+			await expect(keyInput).toHaveAttribute("type", "password");
+			await keyInput.fill("sk-local");
+			await keyInput.dispatchEvent("change");
+			expect(await page.evaluate(({KEYS, id}) => $tw.wiki.getTiddlerText(KEYS + id), {KEYS, id})).toBe("sk-local");
+
+			// endpoint makes it configured → it appears in the chat dropdown
+			expect(await page.evaluate((id) => $tw.modules.execute("$:/plugins/rimir/llm-connect/connections").isConfigured(id), id)).toBe(false);
+			const endpoint = editor.locator('.llm-conn-field[data-field="endpoint"] input');
+			await endpoint.fill("http://llm.mock/v1");
+			await endpoint.dispatchEvent("change");
+			expect(await page.evaluate((id) => $tw.modules.execute("$:/plugins/rimir/llm-connect/connections").isConfigured(id), id)).toBe(true);
+			await page.evaluate((id) => {
+				$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/" + id, type: "application/json",
+					text: JSON.stringify([{id: "mock-a", label: "Mock A"}])});
+				$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/cloud", type: "application/json",
+					text: JSON.stringify([{id: "claude-x", label: "Claude X"}])});
+			}, id);
+			await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat/>' });
+			await navigateToTiddler(page, "LlmChatTest");
+			const chat = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+			await chat.locator(".llm-model-selector-btn").click();
+			await expect(chat.locator(".llm-model-selector-provider-header")).toHaveText(["Cloud", NAME]);
+			await deleteTiddlerFromBrowser(page, "LlmChatTest");
+
+			// with cached models the model field becomes a select
+			await expect(editor.locator('.llm-conn-field[data-field="model"] select option[value="mock-a"]')).toHaveCount(1);
+
+			// make default → badge moves
+			await editor.locator(".llm-conn-make-default").click();
+			await expect(row.locator(".llm-conn-default")).toBeVisible();
+			await expect(body.locator('.llm-conn[data-connection="cloud"] .llm-conn-default')).toHaveCount(0);
+			expect(await page.evaluate(() => $tw.wiki.getTiddlerText("$:/config/rimir/llm-connect/default-connection"))).toBe(id);
+
+			// delete (two-step) → row, connection and key gone, default cleared
+			await editor.locator(".llm-conn-delete").click();
+			expect(await page.evaluate(({CONN, id}) => $tw.wiki.tiddlerExists(CONN + id), {CONN, id})).toBe(true);
+			await editor.locator(".llm-conn-delete-confirm").click();
+			await expect(row).toHaveCount(0);
+			const after = await page.evaluate(({CONN, KEYS, id}) => ({
+				conn: $tw.wiki.tiddlerExists(CONN + id),
+				key: $tw.wiki.tiddlerExists(KEYS + id),
+				def: $tw.wiki.tiddlerExists("$:/config/rimir/llm-connect/default-connection")
+			}), {CONN, KEYS, id});
+			expect(after).toEqual({conn: false, key: false, def: false});
+			await expect(body.locator('.llm-conn[data-connection="cloud"]')).toHaveCount(1);
+		});
+
+		test("Routing lists each connection's cheap and expensive models", async ({ page }) => {
+			await page.evaluate(({CONN, CONN_TAG}) => {
+				$tw.wiki.addTiddler({title: CONN + "cloud", tags: CONN_TAG, "connection-id": "cloud", "connection-name": "Cloud",
+					"connection-type": "claude", model: "claude-x", "cheap-model": "claude-haiku", "expensive-model": "claude-opus"});
+			}, {CONN, CONN_TAG});
+			const frame = await openSettings(page);
+			await openTab(frame, "Routing");
+			const body = frame.locator(".rr-settings-tabs-body");
+			await expect(body.locator('input[type="checkbox"]')).toHaveCount(1);
+			const tr = body.locator(".llm-routing-table tr").filter({ hasText: "Cloud" });
+			await expect(tr).toContainText("claude-haiku");
+			await expect(tr).toContainText("claude-opus");
+		});
+
+		test("tab strip in ControlPanel wraps instead of overflowing", async ({ page }) => {
+			await page.setViewportSize({ width: 900, height: 900 });
+			await navigateToTiddler(page, "$:/ControlPanel");
+			const cp = page.locator('.tc-tiddler-frame[data-tiddler-title="$:/ControlPanel"]');
+			await cp.locator("button, a").filter({ hasText: "Settings" }).first().click();
+			await cp.locator("button, a").filter({ hasText: "Rimi Plugins" }).click();
+			await cp.locator(".rr-settings-sidebar .rr-settings-plugin-item").filter({ hasText: /llm.connect/i }).click();
+			const strip = cp.locator(".rr-settings-content .rr-settings-tabs-strip");
+			await expect(strip.locator(".rr-settings-tab")).toHaveCount(6);
+			const fits = await strip.evaluate(el => el.scrollWidth <= el.clientWidth + 1);
+			expect(fits).toBe(true);
+			await page.evaluate(() => {
+				const story = $tw.wiki.getTiddlerList("$:/StoryList").filter(t => t !== "$:/ControlPanel");
+				$tw.wiki.addTiddler({title: "$:/StoryList", text: "", list: $tw.utils.stringifyList(story)});
+			});
+		});
 	});
 });
