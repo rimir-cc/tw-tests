@@ -4,9 +4,11 @@ const { waitForTW, navigateToTiddler, openEditor, getDraftFrame,
 
 const NOTE = "E2E llm-inline note";
 const CONFIG = {
-	"$:/config/rimir/llm-connect/provider": "openai-compatible",
-	"$:/config/rimir/llm-connect/providers/openai-compatible/endpoint": "http://llm.mock",
-	"$:/config/rimir/llm-connect/providers/openai-compatible/model": "mock",
+	"$:/config/rimir/llm-connect/default-connection": "mock",
+	"$:/config/rimir/llm-connect/connections/mock": {
+		tags: "$:/tags/rimir/llm-connect/connection", "connection-id": "mock", "connection-name": "Mock",
+		"connection-type": "openai-compatible", endpoint: "http://llm.mock/v1", model: "mock"
+	},
 	"$:/config/rimir/llm-connect/protection-mode": "deny",
 	"$:/config/rimir/llm-inline/tools": ""
 };
@@ -65,8 +67,8 @@ async function cleanup(page) {
 }
 
 async function setup(page) {
-	for (const [title, text] of Object.entries(CONFIG)) {
-		await createTiddlerInBrowser(page, title, { text });
+	for (const [title, value] of Object.entries(CONFIG)) {
+		await createTiddlerInBrowser(page, title, typeof value === "string" ? { text: value } : value);
 	}
 }
 
