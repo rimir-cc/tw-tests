@@ -1,6 +1,8 @@
 const { defineConfig } = require("@playwright/test");
 const path = require("path");
 
+const WORK_FOCUS = /(^|[\\/])(kind-)?work-focus\.spec\.js$/;
+
 module.exports = defineConfig({
 	testDir: "./tests/e2e",
 	timeout: 30000,
@@ -15,6 +17,15 @@ module.exports = defineConfig({
 		{
 			name: "chromium",
 			use: { browserName: "chromium" },
+			testIgnore: WORK_FOCUS,
+		},
+		{
+			// work-focus specs share synced state (ring config, mutes, area tags, kind-work-focus/me)
+			// through the one pw-edition server: never run two of them at the same time
+			name: "work-focus",
+			use: { browserName: "chromium" },
+			testMatch: WORK_FOCUS,
+			workers: 1,
 		},
 	],
 	webServer: {
