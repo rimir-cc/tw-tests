@@ -396,94 +396,155 @@ test.describe("llm-connect plugin", () => {
 		});
 	});
 
-	// === connections ===
+	test.describe("connections", () => {
+		test.afterEach(async ({ page }) => {
+			await teardownConnections(page);
+		});
 
-	const CONN = "$:/config/rimir/llm-connect/connections/";
-	const CONN_TAG = "$:/tags/rimir/llm-connect/connection";
-	const TEMP_CHAT = "$:/temp/e2e/llm-connect-chat";
+		// === connections ===
 
-	async function setupConnections(page) {
-		await page.evaluate(({CONN, CONN_TAG}) => {
-			$tw.wiki.addTiddler({title: CONN + "local", tags: CONN_TAG, "connection-id": "local", "connection-name": "Local",
-				"connection-type": "openai-compatible", endpoint: "http://llm.mock/v1", model: "mock-a"});
-			$tw.wiki.addTiddler({title: CONN + "cloud", tags: CONN_TAG, "connection-id": "cloud", "connection-name": "Cloud",
-				"connection-type": "claude", model: "claude-x"});
-			$tw.wiki.addTiddler({title: "$:/config/rimir/llm-connect/keys/cloud", text: "sk-test"});
-			$tw.wiki.addTiddler({title: "$:/config/rimir/llm-connect/default-connection", text: "cloud"});
-			$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/local", type: "application/json",
-				text: JSON.stringify([{id: "mock-a", label: "Mock A"}, {id: "mock-b", label: "Mock B"}])});
-			$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/cloud", type: "application/json",
-				text: JSON.stringify([{id: "claude-x", label: "Claude X"}])});
-		}, {CONN, CONN_TAG});
-	}
+		const CONN = "$:/config/rimir/llm-connect/connections/";
+		const CONN_TAG = "$:/tags/rimir/llm-connect/connection";
+		const TEMP_CHAT = "$:/temp/e2e/llm-connect-chat";
 
-	async function teardownConnections(page) {
-		await page.evaluate((TEMP_CHAT) => {
-			["local", "cloud"].forEach(function(id) {
-				$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/connections/" + id);
-				$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/keys/" + id);
-				$tw.wiki.deleteTiddler("$:/temp/rimir/llm-connect/models/" + id);
+		async function setupConnections(page) {
+			await page.evaluate(({CONN, CONN_TAG}) => {
+				$tw.wiki.addTiddler({title: CONN + "local", tags: CONN_TAG, "connection-id": "local", "connection-name": "Local",
+					"connection-type": "openai-compatible", endpoint: "http://llm.mock/v1", model: "mock-a"});
+				$tw.wiki.addTiddler({title: CONN + "cloud", tags: CONN_TAG, "connection-id": "cloud", "connection-name": "Cloud",
+					"connection-type": "claude", model: "claude-x"});
+				$tw.wiki.addTiddler({title: "$:/config/rimir/llm-connect/keys/cloud", text: "sk-test"});
+				$tw.wiki.addTiddler({title: "$:/config/rimir/llm-connect/default-connection", text: "cloud"});
+				$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/local", type: "application/json",
+					text: JSON.stringify([{id: "mock-a", label: "Mock A"}, {id: "mock-b", label: "Mock B"}])});
+				$tw.wiki.addTiddler({title: "$:/temp/rimir/llm-connect/models/cloud", type: "application/json",
+					text: JSON.stringify([{id: "claude-x", label: "Claude X"}])});
+			}, {CONN, CONN_TAG});
+		}
+
+		async function teardownConnections(page) {
+			await page.evaluate((TEMP_CHAT) => {
+				["local", "cloud"].forEach(function(id) {
+					$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/connections/" + id);
+					$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/keys/" + id);
+					$tw.wiki.deleteTiddler("$:/temp/rimir/llm-connect/models/" + id);
+				});
+				$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/default-connection");
+				$tw.wiki.deleteTiddler(TEMP_CHAT);
+			}, TEMP_CHAT);
+			// flush deletions to the server so no files stay behind in pw-edition/tiddlers
+			await page.waitForFunction(() => !$tw.syncer.isDirty());
+		}
+
+		test("model dropdown lists one header per connection and picking a model updates the label", async ({ page }) => {
+			await setupConnections(page);
+			await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat/>' });
+			await navigateToTiddler(page, "LlmChatTest");
+			const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+			await expect(frame.locator(".llm-model-selector-btn")).toHaveText("Cloud / claude-x");
+
+			await frame.locator(".llm-model-selector-btn").click();
+			const headers = frame.locator(".llm-model-selector-provider-header");
+			await expect(headers).toHaveText(["Cloud", "Local"]);
+			await frame.locator('.llm-model-selector-item[data-connection="local"][data-model="mock-b"]').click();
+			await expect(frame.locator(".llm-model-selector-btn")).toHaveText("Local / mock-b");
+			const stored = await page.evaluate(() => ({
+				def: $tw.wiki.getTiddlerText("$:/config/rimir/llm-connect/default-connection"),
+				model: $tw.wiki.getTiddler("$:/config/rimir/llm-connect/connections/local").fields.model
+			}));
+			expect(stored).toEqual({def: "local", model: "mock-b"});
+
+			await deleteTiddlerFromBrowser(page, "LlmChatTest");
+		});
+
+		test("old chat with only llm-provider opens locked on the matching connection", async ({ page }) => {
+			await setupConnections(page);
+			await page.evaluate((TEMP_CHAT) => {
+				$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-provider": "claude", "llm-model": "claude-old",
+					"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
+			}, TEMP_CHAT);
+			await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
+			await navigateToTiddler(page, "LlmChatTest");
+			const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+			await expect(frame.locator(".llm-model-selector-btn")).toContainText("Cloud / claude-old");
+			await expect(frame.locator(".llm-model-selector-btn")).toContainText("\uD83D\uDD12");
+			await expect(frame.locator(".llm-chat-connection-notice")).toBeHidden();
+
+			await deleteTiddlerFromBrowser(page, "LlmChatTest");
+		});
+
+		test("chat whose connection was deleted shows a notice", async ({ page }) => {
+			await setupConnections(page);
+			await page.evaluate((TEMP_CHAT) => {
+				$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-connection": "gone", "llm-connection-name": "Old",
+					"llm-connection-type": "claude", "llm-provider": "claude", "llm-model": "claude-old",
+					"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
+			}, TEMP_CHAT);
+			await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
+			await navigateToTiddler(page, "LlmChatTest");
+			const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+			await expect(frame.locator(".llm-chat-connection-notice")).toHaveText('Connection "Old" no longer exists, using "Cloud".');
+			await expect(frame.locator(".llm-model-selector-btn")).toContainText("Cloud / claude-old");
+
+			await deleteTiddlerFromBrowser(page, "LlmChatTest");
+		});
+
+			test("chat with messages and an unresolvable connection can pick a connection", async ({ page }) => {
+				await setupConnections(page);
+				await page.evaluate((TEMP_CHAT) => {
+					$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-connection": "gone", "llm-connection-name": "Old",
+						"llm-connection-type": "nonexistent-type", "llm-model": "old-model",
+						"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
+				}, TEMP_CHAT);
+				await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
+				await navigateToTiddler(page, "LlmChatTest");
+				const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+				await expect(frame.locator(".llm-chat-connection-notice")).toHaveText("No connection of type nonexistent-type exists. Pick a connection.");
+
+				// a send attempt changes nothing and keeps the text
+				await frame.locator(".llm-chat-textarea").fill("hello");
+				await frame.locator(".llm-chat-btn-send").click();
+				await expect(frame.locator(".llm-chat-textarea")).toHaveValue("hello");
+				const msgCount = await page.evaluate((t) => JSON.parse($tw.wiki.getTiddler(t).fields["llm-messages"]).length, TEMP_CHAT);
+				expect(msgCount).toBe(1);
+
+				await frame.locator(".llm-model-selector-btn").click();
+				await frame.locator('.llm-model-selector-item[data-connection="local"][data-model="mock-a"]').click();
+				await expect(frame.locator(".llm-model-selector-btn")).toContainText("Local / mock-a");
+				await expect(frame.locator(".llm-chat-connection-notice")).toBeHidden();
+
+				await deleteTiddlerFromBrowser(page, "LlmChatTest");
 			});
-			$tw.wiki.deleteTiddler("$:/config/rimir/llm-connect/default-connection");
-			$tw.wiki.deleteTiddler(TEMP_CHAT);
-		}, TEMP_CHAT);
-		// flush deletions to the server so no files stay behind in pw-edition/tiddlers
-		await page.waitForFunction(() => !$tw.syncer.isDirty());
-	}
 
-	test("model dropdown lists one header per connection and picking a model updates the label", async ({ page }) => {
-		await setupConnections(page);
-		await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat/>' });
-		await navigateToTiddler(page, "LlmChatTest");
-		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
-		await expect(frame.locator(".llm-model-selector-btn")).toHaveText("Cloud / claude-x");
+			test("unresolvable chat keeps its stored connection fields after a save", async ({ page }) => {
+				await setupConnections(page);
+				await page.evaluate((TEMP_CHAT) => {
+					$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-connection": "gone", "llm-connection-name": "Old",
+						"llm-connection-type": "nonexistent-type", "llm-model": "old-model",
+						"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
+				}, TEMP_CHAT);
+				await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
+				await navigateToTiddler(page, "LlmChatTest");
+				const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
+				await expect(frame.locator(".llm-model-selector-btn")).toBeVisible();
+				// run the widget's real save path (saveMessages) on the existing messages
+				await page.evaluate((t) => {
+					const find = (w) => {
+						if (w.saveMessages && w.chatTiddler === t) return w;
+						for (const c of (w.children || [])) { const r = find(c); if (r) return r; }
+						return null;
+					};
+					const w = find($tw.rootWidget);
+					w.saveMessages(w.getMessages());
+				}, TEMP_CHAT);
+				const fields = await page.evaluate((t) => {
+					const f = $tw.wiki.getTiddler(t).fields;
+					return {c: f["llm-connection"], n: f["llm-connection-name"], t: f["llm-connection-type"]};
+				}, TEMP_CHAT);
+				expect(fields).toEqual({c: "gone", n: "Old", t: "nonexistent-type"});
 
-		await frame.locator(".llm-model-selector-btn").click();
-		const headers = frame.locator(".llm-model-selector-provider-header");
-		await expect(headers).toHaveText(["Cloud", "Local"]);
-		await frame.locator('.llm-model-selector-item[data-connection="local"][data-model="mock-b"]').click();
-		await expect(frame.locator(".llm-model-selector-btn")).toHaveText("Local / mock-b");
-		const stored = await page.evaluate(() => ({
-			def: $tw.wiki.getTiddlerText("$:/config/rimir/llm-connect/default-connection"),
-			model: $tw.wiki.getTiddler("$:/config/rimir/llm-connect/connections/local").fields.model
-		}));
-		expect(stored).toEqual({def: "local", model: "mock-b"});
+				await deleteTiddlerFromBrowser(page, "LlmChatTest");
+			});
 
-		await deleteTiddlerFromBrowser(page, "LlmChatTest");
-		await teardownConnections(page);
-	});
-
-	test("old chat with only llm-provider opens locked on the matching connection", async ({ page }) => {
-		await setupConnections(page);
-		await page.evaluate((TEMP_CHAT) => {
-			$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-provider": "claude", "llm-model": "claude-old",
-				"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
-		}, TEMP_CHAT);
-		await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
-		await navigateToTiddler(page, "LlmChatTest");
-		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
-		await expect(frame.locator(".llm-model-selector-btn")).toContainText("Cloud / claude-old");
-		await expect(frame.locator(".llm-model-selector-btn")).toContainText("\uD83D\uDD12");
-		await expect(frame.locator(".llm-chat-connection-notice")).toBeHidden();
-
-		await deleteTiddlerFromBrowser(page, "LlmChatTest");
-		await teardownConnections(page);
-	});
-
-	test("chat whose connection was deleted shows a notice", async ({ page }) => {
-		await setupConnections(page);
-		await page.evaluate((TEMP_CHAT) => {
-			$tw.wiki.addTiddler({title: TEMP_CHAT, "llm-connection": "gone", "llm-connection-name": "Old",
-				"llm-connection-type": "claude", "llm-provider": "claude", "llm-model": "claude-old",
-				"llm-messages": JSON.stringify([{role: "user", content: "hi"}])});
-		}, TEMP_CHAT);
-		await createTiddlerInBrowser(page, "LlmChatTest", { text: '<$llm-chat chatTiddler="' + TEMP_CHAT + '"/>' });
-		await navigateToTiddler(page, "LlmChatTest");
-		const frame = page.locator('.tc-tiddler-frame[data-tiddler-title="LlmChatTest"]');
-		await expect(frame.locator(".llm-chat-connection-notice")).toHaveText('Connection "Old" no longer exists, using "Cloud".');
-		await expect(frame.locator(".llm-model-selector-btn")).toContainText("Cloud / claude-old");
-
-		await deleteTiddlerFromBrowser(page, "LlmChatTest");
-		await teardownConnections(page);
 	});
 });
