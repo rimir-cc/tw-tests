@@ -601,6 +601,13 @@ test.describe("llm-connect plugin", () => {
 				const box = await shorts.nth(i).boundingBox();
 				expect(box.width).toBeLessThan(150);
 			}
+			// in the story river the rows keep label and control side by side
+			const sideBySide = await frame.locator(".rr-settings-tabs-body .rr-settings-row").first().evaluate(row => {
+				const l = row.querySelector(".rr-settings-row-label").getBoundingClientRect();
+				const c = row.querySelector(".rr-settings-row-control").getBoundingClientRect();
+				return c.left >= l.right && Math.abs(c.top - l.top) < 20;
+			});
+			expect(sideBySide).toBe(true);
 		});
 
 		test("old settings sections are gone and every tab renders without errors", async ({ page }) => {
@@ -714,6 +721,63 @@ test.describe("llm-connect plugin", () => {
 			const tr = body.locator(".llm-routing-table tr").filter({ hasText: "Cloud" });
 			await expect(tr).toContainText("claude-haiku");
 			await expect(tr).toContainText("claude-opus");
+		});
+
+		test("settings rows fit the narrow ControlPanel column", async ({ page }) => {
+			// 1100px: the TW sidebar is still shown, so the hub's content column is at its narrowest
+			await page.setViewportSize({ width: 1100, height: 1000 });
+			await page.evaluate(({CONN, CONN_TAG}) => {
+				$tw.wiki.addTiddler({title: CONN + "narrow", tags: CONN_TAG, "connection-id": "narrow", "connection-name": "Narrow",
+					"connection-type": "azure", model: "gpt-x"});
+				$tw.wiki.addTiddler({title: "$:/state/rimir/llm-connect/connection-open/narrow", text: "open"});
+			}, {CONN, CONN_TAG});
+			await navigateToTiddler(page, "$:/ControlPanel");
+			const cp = page.locator('.tc-tiddler-frame[data-tiddler-title="$:/ControlPanel"]');
+			await cp.locator("button, a").filter({ hasText: "Settings" }).first().click();
+			await cp.locator("button, a").filter({ hasText: "Rimi Plugins" }).click();
+			await cp.locator(".rr-settings-sidebar .rr-settings-plugin-item").filter({ hasText: /llm.connect/i }).click();
+			const content = cp.locator(".rr-settings-content");
+
+			async function rowProblems() {
+				return content.locator(".rr-settings-tabs-body").evaluate(body => {
+					const out = [];
+					body.querySelectorAll(".rr-settings-row").forEach(row => {
+						const r = row.getBoundingClientRect();
+						const label = row.querySelector(":scope > .rr-settings-row-label").getBoundingClientRect();
+						const control = row.querySelector(":scope > .rr-settings-row-control").getBoundingClientRect();
+						const name = row.querySelector(":scope > .rr-settings-row-label").textContent;
+						row.querySelectorAll(":scope > .rr-settings-row-control .rr-config-input-medium, :scope > .rr-settings-row-control .rr-config-input-short").forEach(el => {
+							const b = el.getBoundingClientRect();
+							const em = parseFloat(getComputedStyle(el).fontSize);
+							const want = el.classList.contains("rr-config-input-short") ? 7 : 12;
+							if (b.width > 0 && b.width < want * em) out.push(name + ": input squeezed to " + Math.round(b.width) + "px");
+						});
+						row.querySelectorAll(":scope > .rr-settings-row-control input, :scope > .rr-settings-row-control select").forEach(el => {
+							const b = el.getBoundingClientRect();
+							if (b.width > 0 && b.right > r.right + 0.5) out.push(name + ": control overflows row");
+						});
+						const overlap = label.width > 0 && control.width > 0 &&
+							label.left < control.right && control.left < label.right &&
+							label.top < control.bottom && control.top < label.bottom;
+						if (overlap) out.push(name + ": label overlaps control");
+					});
+					return out;
+				});
+			}
+
+			await expect(content.locator('.llm-conn[data-connection="narrow"] .llm-conn-editor')).toBeVisible();
+			expect(await content.locator(".llm-conn-editor .rr-settings-row").count()).toBeGreaterThan(5);
+			expect(await rowProblems()).toEqual([]);
+
+			await content.locator(".rr-settings-tab").filter({ hasText: "Files" }).click();
+			await expect(content.locator(".rr-settings-tab-active")).toHaveText("Files");
+			expect(await content.locator(".rr-settings-tabs-body .rr-settings-row").count()).toBeGreaterThanOrEqual(5);
+			expect(await rowProblems()).toEqual([]);
+
+			await page.evaluate(() => {
+				const story = $tw.wiki.getTiddlerList("$:/StoryList").filter(t => t !== "$:/ControlPanel");
+				$tw.wiki.addTiddler({title: "$:/StoryList", text: "", list: $tw.utils.stringifyList(story)});
+			});
 		});
 
 		test("tab strip in ControlPanel wraps instead of overflowing", async ({ page }) => {
