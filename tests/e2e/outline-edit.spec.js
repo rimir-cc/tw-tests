@@ -78,22 +78,37 @@ test.describe("outline edit", () => {
 	});
 
 	test("shift-enter edits at position", async ({ page, request }) => {
-		await createTiddler(request, title, { text: "* a\n* b" });
+		await createTiddler(request, title, { text: "* a\n* b\n** b1\n\npara" });
 		await outlined(page, title);
-		await editItem(page, title, "b");
+		await frameOf(page, title).locator("li").nth(1).click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Shift+Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		// Items: the host is the first child of the item's li; the li's own text is hidden, its sub-items are not
 		const placement = await page.evaluate(() => {
 			const host = document.querySelector(".rr-ol-editor-host");
-			const next = host.nextElementSibling;
+			const li = host.parentNode;
 			return {
 				tag: host.tagName.toLowerCase(),
-				nextStart: next.getAttribute("data-ol-start"),
-				nextEditing: next.classList.contains("rr-ol-editing"),
-				parentTag: host.parentNode.tagName.toLowerCase()
+				first: li.firstChild === host,
+				liStart: li.getAttribute("data-ol-start"),
+				own: li.classList.contains("rr-ol-editing-own")
 			};
 		});
-		expect(placement).toEqual({ tag: "li", nextStart: "4", nextEditing: true, parentTag: "ul" });
+		expect(placement).toEqual({ tag: "div", first: true, liStart: "4", own: true });
 		expect(await editorValue(page)).toBe("* b");
-		await expect(frameOf(page, title).locator("li.rr-ol-editing")).toBeHidden();
+		await expect(hosts(page)).toBeVisible();
+		await expect(frameOf(page, title).locator("li").filter({ hasText: /^b1$/ })).toBeVisible();
+		await page.keyboard.press("Escape");
+		// Blocks: the host sits before the hidden unit
+		await frameOf(page, title).locator(".rr-ol p").click();
+		await page.keyboard.press("Shift+Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await page.evaluate(() => {
+			const next = document.querySelector(".rr-ol-editor-host").nextElementSibling;
+			return next.tagName.toLowerCase() + ":" + next.classList.contains("rr-ol-editing");
+		})).toBe("p:true");
+		await expect(frameOf(page, title).locator(".rr-ol p[data-ol-start]")).toBeHidden();
+		expect(await editorValue(page)).toBe("para");
 	});
 
 	test("ctrl-enter writes only that range", async ({ page, request }) => {
@@ -281,10 +296,36 @@ test.describe("outline edit", () => {
 		await expect(hosts(page)).toHaveCount(1);
 		expect(await editorValue(page)).toBe("* bbX");
 		// The editor sits next to the relocated unit and has the focus again
-		expect(await page.evaluate(() => document.querySelector(".rr-ol-editor-host").nextElementSibling.getAttribute("data-ol-start"))).toBe("10");
+		expect(await page.evaluate(() => document.querySelector(".rr-ol-editor-host").parentNode.getAttribute("data-ol-start"))).toBe("10");
 		await page.keyboard.type("Y");
 		await page.keyboard.press("Control+Enter");
 		await expect.poll(() => text(page, title)).toBe("* new\n* a\n* bbXY");
+		await expect(hosts(page)).toHaveCount(0);
+	});
+
+	test("outside change does not steal the focus", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* bb" });
+		await outlined(page, title);
+		await editItem(page, title, "bb");
+		await page.keyboard.type("X");
+		const search = page.locator(".tc-sidebar-search input").first();
+		await search.focus();
+		await page.evaluate((t) => $tw.wiki.addTiddler(new $tw.Tiddler($tw.wiki.getTiddler(t), { text: "* new\n* a\n* bb" })), title);
+		await expect(frameOf(page, title).locator("li").filter({ hasText: /^new$/ })).toHaveCount(1);
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("* bbX");
+		await page.waitForTimeout(200);
+		await expect(search).toBeFocused();
+	});
+
+	test("blank save deletes the item", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b\n* c" });
+		await outlined(page, title);
+		await editItem(page, title, "b");
+		await page.keyboard.press("Control+A");
+		await page.keyboard.press("Backspace");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* a\n* c");
 		await expect(hosts(page)).toHaveCount(0);
 	});
 
@@ -356,6 +397,15 @@ test.describe("outline edit", () => {
 		await expect(hosts(page)).toHaveCount(1);
 		await expect(frameOf(page, title).locator(".rr-ol-editor-host")).toHaveCount(1);
 		await expect(frameOf(page, viewer).locator(".rr-ol-editor-host")).toHaveCount(0);
+		await page.keyboard.type("x");
+		// Shift-Enter in the other view does not open a second editor or overwrite the buffer:
+		// the owning editor gets the focus back
+		await frameOf(page, viewer).locator("li").filter({ hasText: /^a$/ }).click();
+		await page.keyboard.press("Shift+Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		await expect(frameOf(page, viewer).locator(".rr-ol-editor-host")).toHaveCount(0);
+		expect(await page.evaluate((t) => $tw.wiki.getTiddlerText(t), BUFFER + title)).toBe("* bx");
+		await page.keyboard.press("Backspace");
 		await page.keyboard.press("End");
 		await page.keyboard.type("2");
 		await page.keyboard.press("Control+Enter");
