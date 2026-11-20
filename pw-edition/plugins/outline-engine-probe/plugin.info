@@ -1,0 +1,9 @@
+{
+    "title": "$:/plugins/rimir-test/outline-engine-probe",
+    "name": "outline engine probe",
+    "description": "Test-only (pw-edition): counts calls of the core text editor engines' handleInputEvent in window.__olEngineCalls",
+    "author": "rimir",
+    "version": "0.0.1",
+    "plugin-type": "plugin",
+    "list": ""
+}
