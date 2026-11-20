@@ -26,6 +26,11 @@ function text(page, title) {
 	return page.evaluate((t) => $tw.wiki.getTiddlerText(t), title);
 }
 
+// Resolves once TW's refresh queue and the following frames have run
+function settled(page) {
+	return page.evaluate(() => new Promise((r) => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(r)), 0)));
+}
+
 // Body HTML with all outline additions removed: data-ol-*, tabindex, rr-ol-* classes, marker
 // elements and the container wrapper itself
 function normalizedBody(page, title) {
@@ -68,8 +73,10 @@ test.describe("outline parity", () => {
 				$tw.wiki.deleteTiddler("$:/state/rimir/outline/on/" + t);
 				$tw.wiki.addTiddler({ title: t, text: x });
 			}, [title, notes[name]]);
-			await expect(frameOf(page, title)).toBeVisible();
-			await page.waitForTimeout(50);
+			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
+			// TW refreshes the story after the store change; wait until its refresh queue has run
+			await settled(page);
+			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
 			const off = await normalizedBody(page, title);
 			await page.evaluate((t) => $tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + t, text: "yes" }), title);
 			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
@@ -100,13 +107,16 @@ test.describe("outline parity", () => {
 		const draft = `Draft of '${title}'`;
 		await expect(frameOf(page, draft)).toBeVisible();
 		await expect(frameOf(page, draft).locator('button[aria-label="outline"]')).toHaveCount(0);
+		// outline state on for the draft too: the real body cascade must still not pick the outline template
+		await page.evaluate((d) => $tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + d, text: "yes" }), draft);
+		await expect(frameOf(page, draft).locator(".rr-ol")).toHaveCount(0);
 		await expect(page.locator(".rr-ol")).toHaveCount(0);
-		// the body filter does not apply to the draft itself
-		const out = await page.evaluate((d) => {
-			$tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + d, text: "yes" });
-			return $tw.wiki.filterTiddlers("[[" + d + "]] :filter[!has[draft.of]]").length;
-		}, draft);
-		expect(out).toBe(0);
+		const cascade = (t) => page.evaluate((x) => $tw.wiki.renderText("text/plain", "text/vnd.tiddlywiki",
+			"<$text text={{{ [<currentTiddler>] :cascade[all[shadows+tiddlers]tag[$:/tags/ViewTemplateBodyFilter]!is[draft]get[text]] }}}/>",
+			{ variables: { currentTiddler: x } }), t);
+		expect(await cascade(draft)).toBe("$:/core/ui/ViewTemplate/body/default");
+		// positive control: the same cascade selects the outline body for the original
+		expect(await cascade(title)).toBe("$:/plugins/rimir/outline/ui/body");
 	});
 
 	test("all operations on corpus", async ({ page, request }) => {
@@ -123,17 +133,31 @@ test.describe("outline parity", () => {
 		expect(count).toBeGreaterThan(5);
 		await units.first().click();
 		const sel = frameOf(page, title).locator(".rr-ol-selected");
+		const original = await text(page, title);
+		const effective = { "Alt+ArrowDown": 0, "Tab": 0 };
 		for(let i = 0; i < count; i++) {
 			await expect(sel).toHaveCount(1);
 			for(const [fwd, back] of [["Alt+ArrowDown", "Alt+ArrowUp"], ["Tab", "Shift+Tab"]]) {
 				const orig = await text(page, title);
 				await page.keyboard.press(fwd);
-				await page.waitForTimeout(80);
-				if(await text(page, title) === orig) { continue; } // edge no-op
+				// A real change shows up quickly; no change within the window means an edge no-op
+				const changed = await expect.poll(() => text(page, title), { timeout: 600 }).not.toBe(orig).then(() => true, () => false);
+				if(!changed) { continue; }
+				effective[fwd]++;
+				// the operation re-renders; wait until the unit is selected and the container focused again
+				await settled(page);
+				await expect(sel).toHaveCount(1);
+				await expect(frameOf(page, title).locator(".rr-ol")).toBeFocused();
 				await page.keyboard.press(back);
 				await expect.poll(() => text(page, title), { message: `unit ${i} ${fwd}/${back}` }).toBe(orig);
+				await settled(page);
+				await expect(sel).toHaveCount(1);
+				await expect(frameOf(page, title).locator(".rr-ol")).toBeFocused();
 			}
 			await page.keyboard.press("ArrowDown");
 		}
+		expect(effective["Alt+ArrowDown"]).toBeGreaterThanOrEqual(2);
+		expect(effective["Tab"]).toBeGreaterThanOrEqual(2);
+		expect(await text(page, title)).toBe(original);
 	});
 });
