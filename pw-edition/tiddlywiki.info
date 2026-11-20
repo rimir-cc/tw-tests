@@ -33,6 +33,7 @@
         "rimir/diffsync",
         "rimir/mindmap",
         "rimir/mindmap-elixir",
+        "rimir/outline",
         "rimir/knowledge-app"
     ],
     "themes": [

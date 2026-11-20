@@ -39,6 +39,7 @@
         "rimir/namespace",
         "rimir/knowledge-app",
         "rimir/mindmap",
+        "rimir/outline",
         "rimir/mindmap-elixir"
     ],
     "themes": [
