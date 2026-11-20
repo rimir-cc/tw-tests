@@ -106,6 +106,29 @@ test.describe("outline structure", () => {
 		await expect(selected(page, title)).toHaveText("b");
 	});
 
+	test("two alt-down before the refresh move two steps", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b\n* c" });
+		await outlined(page, title);
+		await clickItem(page, title, "a");
+		await expect(selected(page, title)).toHaveText("a");
+		// Both keydowns in one task: the second arrives before TW's refresh of the first write
+		await page.evaluate(() => {
+			const el = document.querySelector(".rr-ol");
+			for(let i = 0; i < 2; i++) {
+				const ev = new KeyboardEvent("keydown", { key: "ArrowDown", code: "ArrowDown", altKey: true, bubbles: true, cancelable: true });
+				Object.defineProperty(ev, "keyCode", { get: () => 40 });
+				Object.defineProperty(ev, "which", { get: () => 40 });
+				el.dispatchEvent(ev);
+			}
+		});
+		await expect.poll(() => text(page, title)).toBe("* b\n* c\n* a");
+		await expect(selected(page, title)).toHaveText("a");
+		// Real key presses in a row
+		await page.keyboard.press("Alt+ArrowUp");
+		await page.keyboard.press("Alt+ArrowUp");
+		await expect.poll(() => text(page, title)).toBe("* a\n* b\n* c");
+	});
+
 	test("alt-down moves children along", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n** a1\n* b" });
 		await outlined(page, title);

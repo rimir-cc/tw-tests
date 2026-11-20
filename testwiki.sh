@@ -1,8 +1,21 @@
 #!/bin/bash
 # Run all Jasmine + wiki-based tests across all rimir plugins
-# Usage: ./testwiki.sh [--seed <number>]
+# Usage: ./testwiki.sh [spec=<filter>] [--seed <number>]
+#   --seed <n>  replay the spec order of an earlier run ("Randomized with seed <n>"). TW's --test command
+#               does not take a seed: it is passed as JASMINE_SEED and applied by
+#               test-edition/tiddlers/test-jasmine-seed.js.
 
 set -e
+
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --seed) shift; export JASMINE_SEED="$1" ;;
+    --seed=*) export JASMINE_SEED="${1#--seed=}" ;;
+    *) ARGS+=("$1") ;;
+  esac
+  shift
+done
 
 cd "$(dirname "$0")"
 
@@ -16,4 +29,4 @@ ABS_PLUGINS="$(cd ../dev-wiki/plugins && pwd)"
 
 TIDDLYWIKI_CLI_MODE=1 \
 TIDDLYWIKI_PLUGIN_PATH="$ABS_PLUGINS" \
-npx tiddlywiki test-edition --test "$@"
+npx tiddlywiki test-edition --test "${ARGS[@]}"

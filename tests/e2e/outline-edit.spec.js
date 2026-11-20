@@ -303,6 +303,50 @@ test.describe("outline edit", () => {
 		await expect(hosts(page)).toHaveCount(0);
 	});
 
+	test("page re-render keeps typed text", async ({ page, request }) => {
+		const global = "OLT global " + title;
+		extra.push(global);
+		await createTiddler(request, title, { text: "* a\n* b" });
+		await outlined(page, title);
+		await editItem(page, title, "b");
+		await page.keyboard.press("End");
+		await page.keyboard.type("X");
+		await page.evaluate(() => document.querySelector(".rr-ol").setAttribute("data-olt-old", "yes"));
+		// A new global definition re-renders the whole page template: the $outline widget is destroyed and rebuilt
+		await page.evaluate((t) => $tw.wiki.addTiddler({ title: t, tags: "$:/tags/Global", text: "\\procedure olt-noop() x" }), global);
+		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+		await expect(page.locator(".rr-ol[data-olt-old]")).toHaveCount(0);
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("* bX");
+		expect(await page.evaluate(() => document.querySelector(".rr-ol-editor-host").parentNode.getAttribute("data-ol-start"))).toBe("4");
+		// It had the focus: typing goes on where it was
+		await page.keyboard.type("Y");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* a\n* bXY");
+		await expect(hosts(page)).toHaveCount(0);
+	});
+
+	test("closing the tiddler keeps the edit, toggling off discards it", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b" });
+		await outlined(page, title);
+		await editItem(page, title, "b");
+		await page.keyboard.press("End");
+		await page.keyboard.type("X");
+		await frameOf(page, title).locator('button[aria-label="close"]').click();
+		await expect(frameOf(page, title)).toHaveCount(0);
+		await navigateToTiddler(page, title);
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("* bX");
+		await frameOf(page, title).locator('button[aria-label="outline"]').click();
+		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
+		await expect(hosts(page)).toHaveCount(0);
+		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), BUFFER + title)).toBe(false);
+		await frameOf(page, title).locator('button[aria-label="outline"]').click();
+		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+		await expect(hosts(page)).toHaveCount(0);
+		expect(await text(page, title)).toBe("* a\n* b");
+	});
+
 	test("outside change does not steal the focus", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* bb" });
 		await outlined(page, title);
