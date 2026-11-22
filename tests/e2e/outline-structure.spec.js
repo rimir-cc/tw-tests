@@ -68,6 +68,56 @@ test.describe("outline structure", () => {
 		await expect(frameOf(page, title).locator("li")).toHaveCount(2);
 	});
 
+	test("type badges: all by default, headings only, off; they take no space", async ({ page, request }) => {
+		const CONFIG = "$:/config/rimir/outline/badges";
+		await createTiddler(request, title, { text: "! One\n\n!! Two\n\npara\n\n* a\n** a1\n\n# n\n\n```\ncode\n```\n\n{{" + title + " part}}" });
+		await createTiddler(request, title + " part", { text: "!!! Foreign" });
+		try {
+			await open(page, title);
+			await toggle(page, title);
+			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+			const body = frameOf(page, title).locator(".tc-tiddler-body");
+			const badges = () => body.evaluate((b) => Array.from(b.querySelectorAll("h1, h2, h3, p, ul, ol, li, pre")).map((e) => {
+				const c = getComputedStyle(e, "::after").content;
+				return e.tagName.toLowerCase() + ":" + (c === "none" || c === "normal" ? "-" : c.replace(/"/g, "").replace(/ \/ $/, ""));
+			}));
+			expect(await badges()).toEqual(["h1:h1", "h2:h2", "p:paragraph", "ul:bullet-list", "li:bullet", "ul:-", "li:bullet",
+				"ol:numbered-list", "li:numbered", "pre:code-block", "h3:transclusion"]);
+			// The transcluded heading is the transclusion unit: headings mode below leaves it out
+			// Badges take no space: absolutely positioned, inside the outline (the reserved column on the right)
+			const placed = await body.evaluate((b) => {
+				const ol = b.querySelector(".rr-ol").getBoundingClientRect();
+				return Array.from(b.querySelectorAll("[data-ol-type]")).filter((e) => getComputedStyle(e, "::after").content !== "none")
+					.map((e) => getComputedStyle(e, "::after").position + ":" + (e.getBoundingClientRect().right <= ol.right - 50));
+			});
+			expect(placed.length).toBe(10);
+			expect(placed.every((p) => p === "absolute:true")).toBe(true);
+			// The editor field carries the badge and has the size of the edited unit
+			const para = frameOf(page, title).locator(".rr-ol p");
+			const paraWidth = Math.round((await para.boundingBox()).width);
+			await para.click();
+			await page.keyboard.press("Enter");
+			const host = frameOf(page, title).locator(".rr-ol-editor-host");
+			await expect(host).toHaveAttribute("data-ol-type", "paragraph");
+			expect(Math.round((await host.boundingBox()).width)).toBe(paraWidth);
+			await page.keyboard.press("Escape");
+			await frameOf(page, title).locator(".rr-ol h2").click();
+			await page.keyboard.press("Enter");
+			await expect(host).toHaveAttribute("data-ol-type", "h2");
+			await page.keyboard.press("Escape");
+			// Headings only, then off
+			await page.evaluate((c) => $tw.wiki.addTiddler({ title: c, text: "headings" }), CONFIG);
+			await expect.poll(badges).toEqual(["h1:h1", "h2:h2", "p:-", "ul:-", "li:-", "ul:-", "li:-", "ol:-", "li:-", "pre:-", "h3:-"]);
+			await page.evaluate((c) => $tw.wiki.addTiddler({ title: c, text: "off" }), CONFIG);
+			await expect.poll(badges).toEqual(["h1:-", "h2:-", "p:-", "ul:-", "li:-", "ul:-", "li:-", "ol:-", "li:-", "pre:-", "h3:-"]);
+			await frameOf(page, title).locator(".rr-ol h2").click();
+			await expect(selected(page, title)).toHaveText("Two");
+		} finally {
+			await page.evaluate((c) => $tw.wiki.deleteTiddler(c), CONFIG).catch(() => {});
+			await deleteTiddler(request, title + " part");
+		}
+	});
+
 	test("click and arrows select", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* b\n\npara" });
 		await outlined(page, title);
