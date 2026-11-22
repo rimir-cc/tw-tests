@@ -140,6 +140,57 @@ test.describe("outline structure", () => {
 		await expect(selected(page, title)).not.toContainText("b");
 	});
 
+	test("item with sub-items is framed around its own line only", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n** a1\n** a2\n* b" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		const li = frame.locator("li").first();
+		await li.click({ position: { x: 30, y: 5 } });
+		await expect(li).toHaveClass(/rr-ol-selected-own/);
+		const box = frame.locator(".rr-ol-selbox");
+		await expect(box).toBeVisible();
+		// The li itself draws no frame; the box covers the own line, not the sub-items
+		expect(await li.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe("none");
+		const boxRect = await box.boundingBox();
+		const liRect = await li.boundingBox();
+		const subRect = await frame.locator("li li").first().boundingBox();
+		expect(boxRect.height).toBeLessThan(liRect.height / 2);
+		expect(boxRect.y + boxRect.height).toBeLessThanOrEqual(subRect.y + 1);
+		expect(Math.abs(boxRect.y - liRect.y)).toBeLessThan(3);
+		// Moving still takes the sub-items, and the box follows the moved item
+		await page.keyboard.press("Alt+ArrowDown");
+		await expect.poll(() => text(page, title)).toBe("* b\n* a\n** a1\n** a2");
+		await expect(async () => {
+			const moved = await frame.locator("li").nth(1).boundingBox();
+			const b2 = await box.boundingBox();
+			expect(Math.abs(b2.y - moved.y)).toBeLessThan(3);
+		}).toPass();
+		// A leaf item has its own plain frame, the box is hidden
+		await page.keyboard.press("ArrowUp");
+		await expect(frame.locator("li").first()).toHaveClass(/rr-ol-selected/);
+		await expect(frame.locator("li").first()).not.toHaveClass(/rr-ol-selected-own/);
+		await expect(box).toBeHidden();
+	});
+
+	test("left/right select parent and first child", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "! H\n\n* a\n** a1\n* b" });
+		await outlined(page, title);
+		await clickItem(page, title, "a1");
+		await page.keyboard.press("ArrowLeft");
+		await expect(frameOf(page, title).locator("li").first()).toHaveClass(/rr-ol-selected/);
+		await page.keyboard.press("ArrowLeft");
+		await expect(frameOf(page, title).locator("ul").first()).toHaveClass(/rr-ol-selected/);
+		await page.keyboard.press("ArrowLeft");
+		await expect(frameOf(page, title).locator("h1")).toHaveClass(/rr-ol-selected/);
+		await page.keyboard.press("ArrowRight");
+		await expect(frameOf(page, title).locator("ul").first()).toHaveClass(/rr-ol-selected/);
+		await page.keyboard.press("ArrowRight");
+		await expect(frameOf(page, title).locator("li").first()).toHaveClass(/rr-ol-selected/);
+		await page.keyboard.press("ArrowRight");
+		await expect(frameOf(page, title).locator("li li")).toHaveClass(/rr-ol-selected/);
+		expect(await text(page, title)).toBe("! H\n\n* a\n** a1\n* b");
+	});
+
 	test("edge no-op does not write", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* b" });
 		await outlined(page, title);
