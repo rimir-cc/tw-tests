@@ -718,4 +718,129 @@ test.describe("outline edit", () => {
 		await frame.locator('button[aria-label="outline"]').click();
 		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), HELP + title)).toBe(false);
 	});
+
+	test("double-click edits, Delete asks in the menu", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "! A\n\npara\n\n* a\n* b\n\n! B\n\nend" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), menu = frame.locator(".rr-ol-menu");
+		await frame.locator(".rr-ol p").first().dblclick();
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("para");
+		expect(await page.evaluate(() => String(window.getSelection()))).toBe("");
+		// Caret at the end, nothing selected: typing appends
+		await page.keyboard.type("X");
+		expect(await editorValue(page)).toBe("paraX");
+		await page.keyboard.press("Escape");
+		// Enter too
+		await frame.locator(".rr-ol p").first().click();
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("Y");
+		expect(await editorValue(page)).toBe("paraY");
+		await page.keyboard.press("Escape");
+		// Delete on a heading with a section: yes (with count), just the heading, cancel
+		await frame.locator(".rr-ol h1").first().click();
+		await page.keyboard.press("Delete");
+		await expect(menu.locator(".rr-ol-menu-item")).toHaveText([
+			"Yes, the heading and its section (4 blocks)", "Just the heading", "Cancel (Esc)"]);
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await page.keyboard.press("Delete");
+		await menu.locator(".rr-ol-menu-item", { hasText: "Just the heading" }).click();
+		await expect.poll(() => text(page, title)).toBe("para\n\n* a\n* b\n\n! B\n\nend");
+		// A childless item goes at once (quick delete, on by default)
+		await clickItem(page, title, "b");
+		await page.keyboard.press("Delete");
+		await expect(menu).toHaveCount(0);
+		await expect.poll(() => text(page, title)).toBe("para\n\n* a\n\n! B\n\nend");
+		await expect(frame.locator(".rr-ol-selected")).toHaveCount(1);
+		// A paragraph asks; Enter confirms
+		await frame.locator(".rr-ol p").first().click();
+		await page.keyboard.press("Delete");
+		await expect(menu.locator(".rr-ol-menu-item").first()).toHaveText("Yes, delete");
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("* a\n\n! B\n\nend");
+	});
+
+	test("backspace at the start of a list item merges it into the item above", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* one\n* two\n** two-a\n* three\n\npara" });
+		await outlined(page, title);
+		await editItem(page, title, "three");
+		// Not at the start: a normal backspace
+		await page.keyboard.press("End");
+		await page.keyboard.press("Backspace");
+		expect(await editorValue(page)).toBe("thre");
+		await page.keyboard.press("Home");
+		await page.keyboard.press("Backspace");
+		// Merged into the item visually above (the sub-item), edited at the join
+		await expect.poll(() => text(page, title)).toBe("* one\n* two\n** two-athre\n\npara");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("two-athre");
+		await page.keyboard.type("|");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* one\n* two\n** two-a|thre\n\npara");
+		// An emptied item is deleted, its sub-items stay; the editor goes to the end of the item above
+		await frameOf(page, title).locator("li").nth(1).click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Control+a");
+		await page.keyboard.press("Delete");
+		await page.keyboard.press("Backspace");
+		await expect.poll(() => text(page, title)).toBe("* one\n** two-a|thre\n\npara");
+		expect(await editorValue(page)).toBe("one");
+		await page.keyboard.type("!");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* one!\n** two-a|thre\n\npara");
+		// The first item of a list and a paragraph: nothing happens
+		await frameOf(page, title).locator("li").nth(0).click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Home");
+		await page.keyboard.press("Backspace");
+		expect(await editorValue(page)).toBe("one!");
+		await page.keyboard.press("Escape");
+		// An empty new item: Backspace discards it and edits the item above at its end
+		await frameOf(page, title).locator("li").nth(0).click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("");
+		await page.keyboard.press("Backspace");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("two-a|thre");
+		expect(await text(page, title)).toBe("* one!\n** two-a|thre\n\npara");
+	});
+
+	test("enter in the middle of a list item splits it, backspace joins it again", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* hello world\n* next\n\n# one two\n#* sub" });
+		await outlined(page, title);
+		await editItem(page, title, "hello world");
+		await page.keyboard.press("Home");
+		for(let i = 0; i < 6; i++) { await page.keyboard.press("ArrowRight"); }
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("* hello\n* world\n* next\n\n# one two\n#* sub");
+		// The new item is edited, caret at its start
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("world");
+		await page.keyboard.type(">");
+		expect(await editorValue(page)).toBe(">world");
+		await page.keyboard.press("Backspace");
+		// Backspace at its start joins it again
+		await page.keyboard.press("Backspace");
+		await expect.poll(() => text(page, title)).toBe("* helloworld\n* next\n\n# one two\n#* sub");
+		expect(await editorValue(page)).toBe("helloworld");
+		await page.keyboard.press("Escape");
+		// With sub-items: the rest becomes the first sub-item
+		await frameOf(page, title).locator("ol > li").first().click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Home");
+		for(let i = 0; i < 4; i++) { await page.keyboard.press("ArrowRight"); }
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("* helloworld\n* next\n\n# one\n#* two\n#* sub");
+		await page.keyboard.press("Escape");
+		// At the end Enter still saves and opens a new item
+		await editItem(page, title, "next");
+		await page.keyboard.press("Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("");
+		await page.keyboard.press("Escape");
+		expect(await text(page, title)).toBe("* helloworld\n* next\n\n# one\n#* two\n#* sub");
+	});
 });
