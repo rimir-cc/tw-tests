@@ -12,6 +12,7 @@ const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler } = require("
 const STATE_ON = "$:/state/rimir/outline/on/";
 const BUFFER = "$:/temp/rimir/outline/edit/";
 const SELECTION = "$:/temp/rimir/outline/selection/";
+const HELP = "$:/temp/rimir/outline/help/";
 const AUTOCOMPLETE = "$:/plugins/EvidentlyCube/AutoComplete";
 
 function frameOf(page, title) {
@@ -79,7 +80,7 @@ test.describe("outline edit", () => {
 
 	test.afterEach(async ({ request }) => {
 		expect(pageErrors).toEqual([]);
-		for(const t of [title, STATE_ON + title, BUFFER + title, SELECTION + title].concat(extra)) {
+		for(const t of [title, STATE_ON + title, BUFFER + title, SELECTION + title, HELP + title].concat(extra)) {
 			await deleteTiddler(request, t);
 		}
 	});
@@ -675,5 +676,46 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("ArrowUp");
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveText("a");
 		await expect(frameOf(page, viewer).locator(".rr-ol-selected")).toHaveText("a");
+	});
+
+	test("? shows the key overview next to the outline, Escape and the buttons close it", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), help = frame.locator(".rr-ol-help");
+		await clickItem(page, title, "a");
+		await page.keyboard.press("?");
+		await expect(help).toBeVisible();
+		await expect(help).toContainText("Navigate");
+		await expect(help).toContainText("In the block menu");
+		await expect(help.locator("kbd", { hasText: /^alt-Up$/ })).toHaveCount(1);
+		// Outside the outline: no new units, the keys keep working, the focus stays
+		await expect(frame.locator(".rr-ol .rr-ol-help")).toHaveCount(0);
+		await page.keyboard.press("ArrowDown");
+		await expect(frame.locator(".rr-ol-selected")).toHaveText("b");
+		expect(await page.evaluate(() => document.activeElement.classList.contains("rr-ol"))).toBe(true);
+		// Escape closes the overview first, then clears the selection
+		await page.keyboard.press("Escape");
+		await expect(help).toHaveCount(0);
+		await expect(frame.locator(".rr-ol-selected")).toHaveText("b");
+		// A changed key shows in the open overview at once
+		await page.keyboard.press("?");
+		extra.push("$:/config/shortcuts/outline-move-up");
+		await page.evaluate(() => $tw.wiki.addTiddler({ title: "$:/config/shortcuts/outline-move-up", text: "ctrl-shift-K" }));
+		await expect(help.locator("kbd", { hasText: /^ctrl-shift-K$/ })).toHaveCount(1);
+		await page.evaluate(() => $tw.wiki.deleteTiddler("$:/config/shortcuts/outline-move-up"));
+		await expect(help.locator("kbd", { hasText: /^alt-Up$/ })).toHaveCount(1);
+		// The ? button toggles, the close button closes
+		await frame.locator(".rr-ol-help-button").click();
+		await expect(help).toHaveCount(0);
+		await frame.locator(".rr-ol-help-button").click();
+		await expect(help).toBeVisible();
+		await help.locator(".rr-ol-help-close").click();
+		await expect(help).toHaveCount(0);
+		// Switching outline mode off closes it for good
+		await frame.locator(".rr-ol").focus();
+		await page.keyboard.press("?");
+		await expect(help).toBeVisible();
+		await frame.locator('button[aria-label="outline"]').click();
+		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), HELP + title)).toBe(false);
 	});
 });

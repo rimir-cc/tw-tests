@@ -32,13 +32,14 @@ function settled(page) {
 }
 
 // Body HTML with all outline additions removed: data-ol-*, tabindex, rr-ol-* classes, marker
-// elements and the container wrapper itself
+// elements, the ? button / key overview and the container wrappers themselves
 function normalizedBody(page, title) {
 	return page.evaluate((t) => {
 		const frame = document.querySelector(`.tc-tiddler-frame[data-tiddler-title="${t}"]`);
 		const body = frame.querySelector(".tc-tiddler-body").cloneNode(true);
 		body.querySelectorAll(".rr-ol-tmark").forEach((e) => e.remove());
-		body.querySelectorAll(".rr-ol").forEach((e) => e.replaceWith(...e.childNodes));
+		body.querySelectorAll(".rr-ol-help-bar").forEach((e) => e.remove());
+		body.querySelectorAll(".rr-ol-frame, .rr-ol").forEach((e) => e.replaceWith(...e.childNodes));
 		const all = [body, ...body.querySelectorAll("*")];
 		all.forEach((e) => {
 			Array.from(e.attributes).forEach((a) => {
@@ -154,7 +155,8 @@ test.describe("outline parity", () => {
 				await expect(sel).toHaveCount(1);
 				await expect(frameOf(page, title).locator(".rr-ol")).toBeFocused();
 			}
-			await page.keyboard.press("ArrowDown");
+			// Ctrl-Down: every unit, also into lists
+			await page.keyboard.press("Control+ArrowDown");
 		}
 		expect(effective["Alt+ArrowDown"]).toBeGreaterThanOrEqual(2);
 		expect(effective["Tab"]).toBeGreaterThanOrEqual(2);

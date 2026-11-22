@@ -75,15 +75,23 @@ test.describe("outline structure", () => {
 		await expect(selected(page, title)).toHaveCount(1);
 		await expect(selected(page, title)).toHaveText("a");
 		await expect(page.locator(".rr-ol")).toBeFocused();
-		await page.keyboard.press("ArrowUp");
-		await expect(selected(page, title)).toHaveAttribute("data-ol-kind", "list");
-		await page.keyboard.press("ArrowDown");
-		await expect(selected(page, title)).toHaveText("a");
 		await page.keyboard.press("ArrowDown");
 		await expect(selected(page, title)).toHaveText("b");
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("ArrowUp");
+		await expect(selected(page, title)).toHaveAttribute("data-ol-kind", "list");
+		// Down from the whole list: the block after it
 		await page.keyboard.press("ArrowDown");
 		await expect(selected(page, title)).toHaveText("para");
 		await expect(selected(page, title)).toHaveAttribute("data-ol-kind", "block");
+		// Up from below: the whole list again; Ctrl-Up: its last item
+		await page.keyboard.press("ArrowUp");
+		await expect(selected(page, title)).toHaveAttribute("data-ol-kind", "list");
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("Control+ArrowUp");
+		await expect(selected(page, title)).toHaveText("b");
+		await page.keyboard.press("ArrowDown");
+		await expect(selected(page, title)).toHaveText("para");
 		// At the end: stays
 		await page.keyboard.press("ArrowDown");
 		await expect(selected(page, title)).toHaveText("para");
