@@ -428,7 +428,7 @@ test.describe("outline edit", () => {
 		await frameOf(page, title).locator(".rr-ol p").click();
 		await page.keyboard.press("Shift+Enter");
 		await expect(menu).toBeVisible();
-		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Insert after", "Turn into"]);
+		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Insert after", "Insert before", "Turn into"]);
 		await expect(active).toHaveText("Paragraph");
 		// Below the selected paragraph
 		const pBox = await frameOf(page, title).locator(".rr-ol p").boundingBox();
@@ -454,7 +454,7 @@ test.describe("outline edit", () => {
 		// Turn the heading into a paragraph with the mouse
 		await frameOf(page, title).locator(".rr-ol h2").click();
 		await page.keyboard.press("Shift+Enter");
-		await menu.locator(".rr-ol-menu-item", { hasText: "Paragraph" }).nth(1).click();
+		await menu.locator(".rr-ol-menu-item", { hasText: "Paragraph" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n* a\n* b\n** b1");
 		// A bullet: only the list type; numbered switches the siblings, the sub-item keeps its own type
 		await clickItem(page, title, "a");
@@ -869,5 +869,43 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Escape");
 		await page.keyboard.press("Control+z");
 		await expect.poll(() => text(page, title)).toBe(start);
+	});
+	test("empty tiddler, insert before, heading moves across blocks, heading to bullet", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), menu = frame.locator(".rr-ol-menu");
+		// Empty: a hint; clicking it and Enter writes a first paragraph
+		await expect(frame.locator(".rr-ol-empty")).toHaveCount(1);
+		await frame.locator(".rr-ol-empty").click();
+		await page.keyboard.press("Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		await expect(frame.locator(".rr-ol-empty")).toBeHidden();
+		await page.keyboard.type("para");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("para");
+		await expect(frame.locator(".rr-ol-empty")).toHaveCount(0);
+		// A list below, then a heading before the list through the menu
+		await page.evaluate((t) => $tw.wiki.addTiddler(new $tw.Tiddler($tw.wiki.getTiddler(t), { text: "para\n\n* a\n* b" })), title);
+		await expect(frame.locator(".rr-ol ul")).toHaveCount(1);
+		await frame.locator(".rr-ol p").first().click();
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("Shift+Enter");
+		await menu.locator(".rr-ol-menu-group", { hasText: /insert before/i }).waitFor();
+		const items = menu.locator(".rr-ol-menu-item");
+		const labels = await items.allTextContents();
+		await items.nth(labels.indexOf("Heading 1", labels.indexOf("Heading 1") + 1)).click();
+		await expect(hosts(page)).toHaveCount(1);
+		await page.keyboard.type("Top");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("para\n\n! Top\n\n* a\n* b");
+		// Alt-Up moves the heading over the paragraph: it joins the section
+		await frame.locator(".rr-ol h1").first().click();
+		await page.keyboard.press("Alt+ArrowUp");
+		await expect.poll(() => text(page, title)).toBe("! Top\n\npara\n\n* a\n* b");
+		// The heading turns into a bullet
+		await page.keyboard.press("Shift+Enter");
+		// The last group is "Turn into"
+		await menu.locator(".rr-ol-menu-item", { hasText: "Bulleted list" }).last().click();
+		await expect.poll(() => text(page, title)).toBe("* Top\n\npara\n\n* a\n* b");
 	});
 });

@@ -39,6 +39,7 @@ function normalizedBody(page, title) {
 		const body = frame.querySelector(".tc-tiddler-body").cloneNode(true);
 		body.querySelectorAll(".rr-ol-tmark").forEach((e) => e.remove());
 		body.querySelectorAll(".rr-ol-help-bar").forEach((e) => e.remove());
+		body.querySelectorAll(".rr-ol-empty").forEach((e) => e.remove());
 		body.querySelectorAll(".rr-ol-frame, .rr-ol").forEach((e) => e.replaceWith(...e.childNodes));
 		const all = [body, ...body.querySelectorAll("*")];
 		all.forEach((e) => {
