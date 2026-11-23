@@ -843,4 +843,31 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Escape");
 		expect(await text(page, title)).toBe("* helloworld\n* next\n\n# one\n#* two\n#* sub");
 	});
+	test("ctrl-z undoes a delete and a split (one step each), ctrl-y redoes", async ({ page, request }) => {
+		const start = "! A\n\npara\n\n* hello world\n* next\n\n! B\n\nend";
+		await createTiddler(request, title, { text: start });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		// Delete a heading with its section, then undo
+		await frame.locator(".rr-ol h1").first().click();
+		await page.keyboard.press("Delete");
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("! B\n\nend");
+		await page.keyboard.press("Control+z");
+		await expect.poll(() => text(page, title)).toBe(start);
+		await expect(frame.locator(".rr-ol-selected")).toHaveCount(1);
+		await page.keyboard.press("Control+y");
+		await expect.poll(() => text(page, title)).toBe("! B\n\nend");
+		await page.keyboard.press("Control+z");
+		await expect.poll(() => text(page, title)).toBe(start);
+		// A split saves the item and adds the new one: one undo step
+		await editItem(page, title, "hello world");
+		await page.keyboard.press("Home");
+		for(let i = 0; i < 6; i++) { await page.keyboard.press("ArrowRight"); }
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("! A\n\npara\n\n* hello\n* world\n* next\n\n! B\n\nend");
+		await page.keyboard.press("Escape");
+		await page.keyboard.press("Control+z");
+		await expect.poll(() => text(page, title)).toBe(start);
+	});
 });
