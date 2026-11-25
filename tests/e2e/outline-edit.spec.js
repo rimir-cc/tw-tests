@@ -1122,6 +1122,22 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Escape");
 	});
 
+	test("the block menu opens below the unit's first visible element (a hidden first element, as a code-block plugin adds)", async ({ page, request }) => {
+		// A widget unit whose first element is hidden: the menu must not go to the top of the page
+		await createTiddler(request, title, { text: "\\procedure two()\n<div style=\"display:none\">\n\na\n\n</div>\n<div>\n\nb\n\n</div>\n\\end\n\npara\n\n<<two>>\n\nend" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), menu = frame.locator(".rr-ol-menu");
+		const shownNode = frame.locator('.rr-ol [data-ol-kind="widget"]').nth(1);
+		await shownNode.click();
+		await expect(frame.locator(".rr-ol-selected")).toHaveCount(2);
+		await page.keyboard.press("Alt+Enter");
+		await expect(menu).toBeVisible();
+		const shown = await shownNode.boundingBox();
+		const box = await menu.boundingBox();
+		expect(box.y).toBeGreaterThanOrEqual(shown.y + shown.height - 1);
+		expect(box.y).toBeLessThan(shown.y + shown.height + 20);
+	});
+
 	test("the copy flash shows on everything inside the unit, also on a code block's own background", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "<div>\n\n```\nx\n```\n\n</div>" });
 		await outlined(page, title);
