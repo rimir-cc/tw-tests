@@ -908,4 +908,131 @@ test.describe("outline edit", () => {
 		await menu.locator(".rr-ol-menu-item", { hasText: "Bulleted list" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("* Top\n\npara\n\n* a\n* b");
 	});
+
+	test("an empty new item shows its marker and takes tab/shift-tab as its level", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para\n\n# a\n# b" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), host = hosts(page);
+		const look = () => page.evaluate(() => {
+			const h = document.querySelector(".rr-ol-editor-host"), cs = getComputedStyle(h);
+			return {display: cs.display, list: cs.listStyleType, margin: parseFloat(cs.marginLeft), type: h.getAttribute("data-ol-type")};
+		});
+		// Block menu after the paragraph: a new bulleted item shows its bullet
+		await frame.locator(".rr-ol p").click();
+		await page.keyboard.press("Shift+Enter");
+		await frame.locator(".rr-ol-menu .rr-ol-menu-item", { hasText: "Bulleted list" }).first().click();
+		await expect(host).toHaveCount(1);
+		expect(await look()).toMatchObject({display: "list-item", list: "disc", type: "bullet"});
+		await page.keyboard.press("Escape");
+		await expect(host).toHaveCount(0);
+		// Enter after b: Tab goes one level deeper (## under b), a second Tab and a Shift-Tab above level 1 do nothing
+		await clickItem(page, title, "b");
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Enter");
+		await expect(host).toHaveCount(1);
+		expect((await look()).margin).toBeLessThan(10);
+		await page.keyboard.press("Tab");
+		await expect.poll(async () => (await look()).margin).toBeGreaterThan(10);
+		await page.keyboard.press("Tab");
+		await page.keyboard.press("Shift+Tab");
+		await page.keyboard.press("Shift+Tab");
+		await expect.poll(async () => (await look()).margin).toBeLessThan(10);
+		await page.keyboard.press("Tab");
+		await expect.poll(async () => (await look()).type).toBe("numbered");
+		expect(await text(page, title)).toBe("para\n\n# a\n# b");
+		await page.keyboard.type("c");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("para\n\n# a\n# b\n## c");
+		await expect(host).toHaveCount(0);
+	});
+
+	test("the copy flash shows on everything inside the unit, also on a code block's own background", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "<div>\n\n```\nx\n```\n\n</div>" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		// The code block, then its parent: the container
+		await frame.locator(".rr-ol pre").click();
+		await page.keyboard.press("ArrowLeft");
+		await expect(frame.locator(".rr-ol > div.rr-ol-selected")).toHaveCount(1);
+		await page.keyboard.press("Control+c");
+		await expect(frame.locator(".rr-ol-copied")).toHaveCount(1);
+		expect(await frame.locator(".rr-ol pre").evaluate((n) => getComputedStyle(n).animationName)).toBe("rr-ol-copied");
+	});
+
+	test("ctrl-c/x/v use the system clipboard: html for outside, levels adapted inside, plain text as wikitext", async ({ page, request }) => {
+		const other = title + " other";
+		extra.push(other, STATE_ON + other, SELECTION + other);
+		await createTiddler(request, title, { text: "* a\n** a1 [[L]]\n\n# x\n## y\n\n! H\n\npara\n\n!! S\n\ns" });
+		await createTiddler(request, other, { text: "" });
+		await outlined(page, title);
+		// What reaches the clipboard (read after the outline wrote it)
+		await page.evaluate(() => {
+			for(const name of ["copy", "cut"]) {
+				document.addEventListener(name, (e) => {
+					window.__clip = {html: e.clipboardData.getData("text/html"), plain: e.clipboardData.getData("text/plain"),
+						own: e.clipboardData.getData("application/x-rimir-outline")};
+				});
+			}
+		});
+		const frame = frameOf(page, title), selected = frame.locator(".rr-ol-selected");
+		// Copy a with its sub-item: wikitext as plain text, rendered html without classes and tiddler links
+		await frame.locator("li").first().click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Control+c");
+		await expect(frame.locator(".rr-ol-copied")).toHaveCount(1);
+		const clip = await page.evaluate(() => window.__clip);
+		expect(clip.plain).toBe("* a\n** a1 [[L]]");
+		expect(JSON.parse(clip.own)).toEqual({ kind: "items", source: "* a\n** a1 [[L]]" });
+		expect(clip.html).toContain("<ul><li>a<ul><li>a1 L</li></ul></li></ul>");
+		// A sub-item copied alone: at level 1 for outside (no empty outer bullet); the outline format keeps its source
+		await clickItem(page, title, "y");
+		await page.keyboard.press("Control+c");
+		const sub = await page.evaluate(() => window.__clip);
+		expect(sub.plain).toBe("# y");
+		expect(sub.html).toContain("<ol><li>y</li></ol>");
+		expect(JSON.parse(sub.own).source).toBe("## y");
+		await frame.locator("li").first().click({ position: { x: 30, y: 5 } });
+		await page.keyboard.press("Control+c");
+		// Paste after ## y: at its level, the sub-item one deeper
+		await clickItem(page, title, "y");
+		await page.keyboard.press("Control+v");
+		await expect.poll(() => text(page, title)).toBe("* a\n** a1 [[L]]\n\n# x\n## y\n## a\n##* a1 [[L]]\n\n! H\n\npara\n\n!! S\n\ns");
+		await expect(selected).toHaveText(/^a/);
+		// Ctrl-Z takes the paste back
+		await page.keyboard.press("Control+z");
+		await expect.poll(() => text(page, title)).toBe("* a\n** a1 [[L]]\n\n# x\n## y\n\n! H\n\npara\n\n!! S\n\ns");
+		// Cut the section S without a question, paste it after para: one level below H
+		await frame.locator(".rr-ol h2").click();
+		await page.keyboard.press("Control+x");
+		await expect(frame.locator(".rr-ol-menu")).toHaveCount(0);
+		await expect.poll(() => text(page, title)).toBe("* a\n** a1 [[L]]\n\n# x\n## y\n\n! H\n\npara");
+		await expect(frame.locator(".rr-ol p")).toHaveCount(1);
+		await frame.locator(".rr-ol p").click();
+		await page.keyboard.press("Control+v");
+		await expect.poll(() => text(page, title)).toBe("* a\n** a1 [[L]]\n\n# x\n## y\n\n! H\n\npara\n\n!! S\n\ns");
+		await expect(selected).toHaveText("S");
+		// The clipboard survives a reload: an empty tiddler gets it at the end
+		await outlined(page, other);
+		await frameOf(page, other).locator(".rr-ol-empty").click();
+		await page.keyboard.press("Control+v");
+		await expect.poll(() => text(page, other)).toBe("! S\n\ns");
+		// Plain text from outside is taken as wikitext: a list after the heading's line, as a new list
+		await page.evaluate(() => {
+			const ta = document.createElement("textarea");
+			ta.id = "outside";
+			ta.value = "** n\n*** m\n";
+			document.body.appendChild(ta);
+		});
+		await page.locator("#outside").focus();
+		await page.keyboard.press("Control+a");
+		await page.keyboard.press("Control+c");
+		await frameOf(page, other).locator(".rr-ol h1").click();
+		await page.keyboard.press("Control+v");
+		await expect.poll(() => text(page, other)).toBe("! S\n\n* n\n** m\n\ns");
+		// The story's dropzone does not import the pastes as tiddlers
+		expect(await page.evaluate(() => $tw.wiki.tiddlerExists("$:/Import"))).toBe(false);
+		// A copied heading flashes with its whole section (heading, list, paragraph)
+		await frameOf(page, other).locator(".rr-ol h1").click();
+		await page.keyboard.press("Control+c");
+		await expect(frameOf(page, other).locator(".rr-ol-copied")).toHaveCount(3);
+	});
 });
