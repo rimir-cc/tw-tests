@@ -256,11 +256,12 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("End");
 		await page.keyboard.press("Enter");
 		await page.keyboard.type("y");
-		expect(await editorValue(page)).toBe("```\ny\nx\n```");
+		// The editor shows the code without its fence lines
+		expect(await editorValue(page)).toBe("x\ny");
 		await expect(hosts(page)).toHaveCount(1);
 		expect(await text(page, title)).toBe("```\nx\n```\n\npara");
 		await page.keyboard.press("Control+Enter");
-		await expect.poll(() => text(page, title)).toBe("```\ny\nx\n```\n\npara");
+		await expect.poll(() => text(page, title)).toBe("```\nx\ny\n```\n\npara");
 	});
 
 	test("editor uses core engine", async ({ page, request }) => {
@@ -944,6 +945,30 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Control+Enter");
 		await expect.poll(() => text(page, title)).toBe("para\n\n# a\n# b\n## c");
 		await expect(host).toHaveCount(0);
+	});
+
+	test("editing a whole quote or a code block hides the > and the fence lines, saving keeps them", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para\n\n> q1\n> q2\n\n```js\nvar a;\n```" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		// Down from the paragraph selects the whole quote
+		await frame.locator(".rr-ol p").click();
+		await page.keyboard.press("ArrowDown");
+		await expect(frame.locator("blockquote.rr-ol-selected")).toHaveCount(1);
+		await page.keyboard.press("Enter");
+		await expect.poll(() => editorValue(page)).toBe("q1\nq2");
+		await page.keyboard.press("End");
+		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.type("q3");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("para\n\n> q1\n> q2\n> q3\n\n```js\nvar a;\n```");
+		await frame.locator(".rr-ol pre").click();
+		await page.keyboard.press("Enter");
+		await expect.poll(() => editorValue(page)).toBe("var a;");
+		await page.keyboard.press("End");
+		await page.keyboard.type(" // x");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("para\n\n> q1\n> q2\n> q3\n\n```js\nvar a; // x\n```");
 	});
 
 	test("the copy flash shows on everything inside the unit, also on a code block's own background", async ({ page, request }) => {
