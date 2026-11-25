@@ -427,7 +427,7 @@ test.describe("outline edit", () => {
 		const menu = frameOf(page, title).locator(".rr-ol-menu");
 		const active = menu.locator(".rr-ol-menu-active");
 		await frameOf(page, title).locator(".rr-ol p").click();
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await expect(menu).toBeVisible();
 		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Insert after", "Insert before", "Turn into"]);
 		await expect(active).toHaveText("Paragraph");
@@ -440,7 +440,7 @@ test.describe("outline edit", () => {
 		await expect(menu).toHaveCount(0);
 		await expect(hosts(page)).toHaveCount(0);
 		// Insert a heading 2 with the keyboard: the field names the type
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("ArrowDown");
 		await expect(active).toHaveText("Heading 2");
@@ -454,19 +454,19 @@ test.describe("outline edit", () => {
 		await expect(frameOf(page, title).locator(".rr-ol h2")).toHaveText("Sub");
 		// Turn the heading into a paragraph with the mouse
 		await frameOf(page, title).locator(".rr-ol h2").click();
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await menu.locator(".rr-ol-menu-item", { hasText: "Paragraph" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n* a\n* b\n** b1");
 		// A bullet: only the list type; numbered switches the siblings, the sub-item keeps its own type
 		await clickItem(page, title, "a");
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await expect(menu.locator(".rr-ol-menu-item")).toHaveText(["Numbered list"]);
 		await page.keyboard.press("Enter");
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n# a\n# b\n#* b1");
 		await expect(frameOf(page, title).locator(".rr-ol ol > li")).toHaveCount(2);
 		await expect(frameOf(page, title).locator(".rr-ol ol ul > li")).toHaveText("b1");
 		// Clicking elsewhere closes the menu
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await expect(menu).toBeVisible();
 		await frameOf(page, title).locator(".rr-ol p").first().click();
 		await expect(menu).toHaveCount(0);
@@ -481,7 +481,7 @@ test.describe("outline edit", () => {
 		await frameOf(page, title).locator(".rr-ol p").first().click();
 		await page.keyboard.press("ArrowDown");
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveAttribute("data-ol-kind", "transclusion");
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await expect(frameOf(page, title).locator(".rr-ol-menu-active")).toHaveText("Edit this line");
 		await page.keyboard.press("Enter");
 		await expect(hosts(page)).toHaveCount(1);
@@ -890,7 +890,7 @@ test.describe("outline edit", () => {
 		await expect(frame.locator(".rr-ol ul")).toHaveCount(1);
 		await frame.locator(".rr-ol p").first().click();
 		await page.keyboard.press("ArrowDown");
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await menu.locator(".rr-ol-menu-group", { hasText: /insert before/i }).waitFor();
 		const items = menu.locator(".rr-ol-menu-item");
 		const labels = await items.allTextContents();
@@ -904,7 +904,7 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Alt+ArrowUp");
 		await expect.poll(() => text(page, title)).toBe("! Top\n\npara\n\n* a\n* b");
 		// The heading turns into a bullet
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		// The last group is "Turn into"
 		await menu.locator(".rr-ol-menu-item", { hasText: "Bulleted list" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("* Top\n\npara\n\n* a\n* b");
@@ -920,7 +920,7 @@ test.describe("outline edit", () => {
 		});
 		// Block menu after the paragraph: a new bulleted item shows its bullet
 		await frame.locator(".rr-ol p").click();
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Alt+Enter");
 		await frame.locator(".rr-ol-menu .rr-ol-menu-item", { hasText: "Bulleted list" }).first().click();
 		await expect(host).toHaveCount(1);
 		expect(await look()).toMatchObject({display: "list-item", list: "disc", type: "bullet"});
@@ -969,6 +969,157 @@ test.describe("outline edit", () => {
 		await page.keyboard.type(" // x");
 		await page.keyboard.press("Control+Enter");
 		await expect.poll(() => text(page, title)).toBe("para\n\n> q1\n> q2\n> q3\n\n```js\nvar a; // x\n```");
+	});
+
+	test("ctrl-enter in selection mode adds an empty unit below: same item kind, else a paragraph", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "! H\n\n* a\n* b\n\n> q\n\n```\nc\n```\n\nend" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		// A bullet: a bullet on its level
+		await clickItem(page, title, "b");
+		await page.keyboard.press("Control+Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("");
+		await page.keyboard.type("x");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\n* a\n* b\n* x\n\n> q\n\n```\nc\n```\n\nend");
+		// A heading: a paragraph right under it
+		await frame.locator(".rr-ol h1").click();
+		await page.keyboard.press("Control+Enter");
+		await page.keyboard.type("p");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\np\n\n* a\n* b\n* x\n\n> q\n\n```\nc\n```\n\nend");
+		// A quote line: a quote line
+		await frame.locator(".rr-ol blockquote div").first().click();
+		await page.keyboard.press("Control+Enter");
+		await page.keyboard.type("r");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\np\n\n* a\n* b\n* x\n\n> q\n> r\n\n```\nc\n```\n\nend");
+		// A code block: a paragraph after it
+		await frame.locator(".rr-ol pre").click();
+		await page.keyboard.press("Control+Enter");
+		await page.keyboard.type("after");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\np\n\n* a\n* b\n* x\n\n> q\n> r\n\n```\nc\n```\n\nafter\n\nend");
+	});
+
+	test("enter at the start of a filled item or paragraph opens an empty one above", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b\n** b1\n\npara" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		// An item with a sub-item: the new item goes above, the sub-item stays with b
+		await frame.locator(".rr-ol ul > li").nth(1).click({ position: { x: 5, y: 5 } });
+		await page.keyboard.press("Enter");
+		await expect.poll(() => editorValue(page)).toBe("b");
+		await page.keyboard.press("Home");
+		await page.keyboard.press("Enter");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("");
+		expect(await text(page, title)).toBe("* a\n* b\n** b1\n\npara");
+		await page.keyboard.type("new");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* a\n* new\n* b\n** b1\n\npara");
+		// Typed text in the item is saved first; Escape on the empty one above leaves the rest as it is
+		await editItem(page, title, "a");
+		await page.keyboard.press("End");
+		await page.keyboard.type("!");
+		await page.keyboard.press("Home");
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("* a!\n* new\n* b\n** b1\n\npara");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("");
+		await page.keyboard.press("Escape");
+		await expect(hosts(page)).toHaveCount(0);
+		expect(await text(page, title)).toBe("* a!\n* new\n* b\n** b1\n\npara");
+		// A paragraph: a paragraph above
+		await frame.locator(".rr-ol p").click();
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Home");
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("first");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("* a!\n* new\n* b\n** b1\n\nfirst\n\npara");
+	});
+
+	test("alt-enter in the editor offers turn into, the editor stays open", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para one\n\n! H" });
+		await outlined(page, title);
+		const frame = frameOf(page, title), menu = frame.locator(".rr-ol-menu");
+		await frame.locator(".rr-ol p").click();
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("End");
+		await page.keyboard.type(" two");
+		await page.keyboard.press("Alt+Enter");
+		await expect(menu).toBeVisible();
+		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Turn into"]);
+		await expect.poll(() => text(page, title)).toBe("para one two\n\n! H");
+		await menu.locator(".rr-ol-menu-item", { hasText: "Heading 2" }).click();
+		await expect.poll(() => text(page, title)).toBe("!! para one two\n\n! H");
+		await expect(hosts(page)).toHaveCount(1);
+		await expect.poll(() => editorValue(page)).toBe("para one two");
+		// Escape closes the menu and goes back to the editor
+		await page.keyboard.press("Alt+Enter");
+		await expect(menu).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(menu).toHaveCount(0);
+		await expect(hosts(page)).toHaveCount(1);
+		await page.keyboard.type("!");
+		await expect.poll(() => editorValue(page)).toBe("para one two!");
+		await page.keyboard.press("Escape");
+		// Shift-Enter in selection mode no longer opens the menu
+		await frame.locator(".rr-ol h1").click();
+		await page.keyboard.press("Shift+Enter");
+		await expect(menu).toHaveCount(0);
+	});
+
+	test("delete at the end of a list item pulls the next item up", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "* a\n* b\n** b1\n* c" });
+		await outlined(page, title);
+		await editItem(page, title, "a");
+		await page.keyboard.press("End");
+		await page.keyboard.press("Delete");
+		await expect.poll(() => text(page, title)).toBe("* ab\n** b1\n* c");
+		await expect.poll(() => editorValue(page)).toBe("ab");
+		// The caret is at the join
+		await page.keyboard.type("|");
+		await expect.poll(() => editorValue(page)).toBe("a|b");
+		await page.keyboard.press("Backspace");
+		// The first sub-item comes up into its item
+		await page.keyboard.press("End");
+		await page.keyboard.press("Delete");
+		await expect.poll(() => text(page, title)).toBe("* abb1\n* c");
+		await page.keyboard.press("Escape");
+		// The last item: nothing happens
+		await editItem(page, title, "c");
+		await page.keyboard.press("End");
+		await page.keyboard.press("Delete");
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("c");
+		expect(await text(page, title)).toBe("* abb1\n* c");
+	});
+
+	test("ctrl-z in an unchanged editor undoes the outline's last step, ctrl-y redoes it", async ({ page, request }) => {
+		const start = "* hello world\n* next";
+		await createTiddler(request, title, { text: start });
+		await outlined(page, title);
+		await editItem(page, title, "hello world");
+		await page.keyboard.press("Home");
+		for(let i = 0; i < 6; i++) { await page.keyboard.press("ArrowRight"); }
+		await page.keyboard.press("Enter");
+		await expect.poll(() => text(page, title)).toBe("* hello\n* world\n* next");
+		await expect.poll(() => editorValue(page)).toBe("world");
+		await page.keyboard.press("Control+z");
+		await expect.poll(() => text(page, title)).toBe(start);
+		await expect(hosts(page)).toHaveCount(1);
+		await expect.poll(() => editorValue(page)).toBe("hello world");
+		await page.keyboard.press("Control+y");
+		await expect.poll(() => text(page, title)).toBe("* hello\n* world\n* next");
+		await expect(hosts(page)).toHaveCount(1);
+		// With typed text Ctrl-Z stays the editor's own
+		await page.keyboard.type("!");
+		await page.keyboard.press("Control+z");
+		expect(await text(page, title)).toBe("* hello\n* world\n* next");
+		await page.keyboard.press("Escape");
 	});
 
 	test("the copy flash shows on everything inside the unit, also on a code block's own background", async ({ page, request }) => {
