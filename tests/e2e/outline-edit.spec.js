@@ -1227,4 +1227,22 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Control+c");
 		await expect(frameOf(page, other).locator(".rr-ol-copied")).toHaveCount(3);
 	});
+
+	test("double-click on another unit while editing saves and edits that unit", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para\n\n* a\n* b\n\nend" });
+		await outlined(page, title);
+		const frame = frameOf(page, title);
+		await editItem(page, title, "a");
+		await page.keyboard.type(" longer");
+		await frame.locator(".rr-ol p").last().dblclick();
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("end");
+		expect(await text(page, title)).toBe("para\n\n* a longer\n* b\n\nend");
+		// Typing goes to the new editor; back up to the paragraph above
+		await page.keyboard.type("!");
+		await frame.locator(".rr-ol p").first().dblclick();
+		await expect(hosts(page)).toHaveCount(1);
+		expect(await editorValue(page)).toBe("para");
+		expect(await text(page, title)).toBe("para\n\n* a longer\n* b\n\nend!");
+	});
 });
