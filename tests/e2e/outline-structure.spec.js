@@ -1,11 +1,10 @@
 const { test, expect } = require("@playwright/test");
-const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler } = require("./helpers");
+const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler, wakeOutline } = require("./helpers");
 
 // Outline mode: toggle, selection, configurable keys and the structural operations
 // (move, indent, promote). Fixtures are normal tiddlers named "OLT <test title>", created through
 // the server before the page loads and deleted in afterEach.
 
-const STATE_ON = "$:/state/rimir/outline/on/";
 const READ_ONLY = "$:/status/IsReadOnly";
 
 function frameOf(page, title) {
@@ -18,15 +17,10 @@ async function open(page, title) {
 	await navigateToTiddler(page, title);
 }
 
-async function toggle(page, title) {
-	await frameOf(page, title).locator('button[aria-label="outline"]').click();
-}
-
-// Open the tiddler and switch outline mode on
+// Open the tiddler and wake its outline (nothing selected)
 async function outlined(page, title) {
 	await open(page, title);
-	await toggle(page, title);
-	await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+	await wakeOutline(page, title);
 }
 
 function text(page, title) {
@@ -52,18 +46,18 @@ test.describe("outline structure", () => {
 	test.afterEach(async ({ page, request }) => {
 		await page.evaluate((t) => $tw.wiki.deleteTiddler(t), READ_ONLY).catch(() => {});
 		await deleteTiddler(request, title);
-		await deleteTiddler(request, STATE_ON + title);
+		await deleteTiddler(request, "$:/temp/rimir/outline/selection/" + title);
 	});
 
-	test("toggle on and off", async ({ page, request }) => {
+	test("wake and sleep", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* b" });
 		await open(page, title);
-		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
-		await toggle(page, title);
 		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+		await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(0);
+		await wakeOutline(page, title);
 		await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(3);
-		await toggle(page, title);
-		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
+		await page.keyboard.press("Escape");
+		await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(0);
 		await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(0);
 		await expect(frameOf(page, title).locator("li")).toHaveCount(2);
 	});
@@ -73,9 +67,7 @@ test.describe("outline structure", () => {
 		await createTiddler(request, title, { text: "! One\n\n!! Two\n\npara\n\n* a\n** a1\n\n# n\n\n```\ncode\n```\n\n{{" + title + " part}}" });
 		await createTiddler(request, title + " part", { text: "!!! Foreign" });
 		try {
-			await open(page, title);
-			await toggle(page, title);
-			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+			await outlined(page, title);
 			const body = frameOf(page, title).locator(".tc-tiddler-body");
 			const badges = () => body.evaluate((b) => Array.from(b.querySelectorAll("h1, h2, h3, p, ul, ol, li, pre")).map((e) => {
 				const c = getComputedStyle(e, "::after").content;
@@ -124,7 +116,7 @@ test.describe("outline structure", () => {
 		await clickItem(page, title, "a");
 		await expect(selected(page, title)).toHaveCount(1);
 		await expect(selected(page, title)).toHaveText("a");
-		await expect(page.locator(".rr-ol")).toBeFocused();
+		await expect(page.locator(".rr-ol.rr-ol-awake")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
 		await expect(selected(page, title)).toHaveText("b");
 		await page.keyboard.press("ArrowUp");
@@ -290,11 +282,11 @@ test.describe("outline structure", () => {
 		await clickItem(page, title, "a");
 		// Indent of the first item is a no-op: Tab must still not move the focus
 		await page.keyboard.press("Tab");
-		await expect(page.locator(".rr-ol")).toBeFocused();
+		await expect(page.locator(".rr-ol.rr-ol-awake")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("Tab");
 		await expect.poll(() => text(page, title)).toBe("* a\n** b");
-		await expect(page.locator(".rr-ol")).toBeFocused();
+		await expect(page.locator(".rr-ol.rr-ol-awake")).toBeFocused();
 		expect(await page.evaluate(() => document.activeElement.classList.contains("rr-ol"))).toBe(true);
 	});
 

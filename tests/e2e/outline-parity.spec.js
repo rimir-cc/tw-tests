@@ -1,11 +1,10 @@
 const { test, expect } = require("@playwright/test");
-const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler } = require("./helpers");
+const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler, wakeOutline } = require("./helpers");
 
-// Outline mode: rendering parity with the normal body, toggle-off cleanliness, draft exclusion and
+// Outline: rendering parity with the normal body (idle and awake), sleep cleanliness, draft exclusion and
 // a round trip of the structural operations over every unit of a corpus note.
 // Fixture notes come from the plugin's own test/fixtures.js. Tiddlers are named "OLT <test title>".
 
-const STATE_ON = "$:/state/rimir/outline/on/";
 const FIXTURES = "$:/plugins/rimir/outline/test/fixtures.js";
 
 function frameOf(page, title) {
@@ -18,9 +17,6 @@ async function open(page, title) {
 	await navigateToTiddler(page, title);
 }
 
-async function toggle(page, title) {
-	await frameOf(page, title).locator('button[aria-label="outline"]').click();
-}
 
 function text(page, title) {
 	return page.evaluate((t) => $tw.wiki.getTiddlerText(t), title);
@@ -62,7 +58,6 @@ test.describe("outline parity", () => {
 
 	test.afterEach(async ({ request }) => {
 		await deleteTiddler(request, title);
-		await deleteTiddler(request, STATE_ON + title);
 	});
 
 	test("parity", async ({ page, request }) => {
@@ -71,48 +66,55 @@ test.describe("outline parity", () => {
 		const names = Object.keys(notes);
 		expect(names.length).toBeGreaterThanOrEqual(12);
 		for(const name of names) {
-			await page.evaluate(([t, x]) => {
-				$tw.wiki.deleteTiddler("$:/state/rimir/outline/on/" + t);
-				$tw.wiki.addTiddler({ title: t, text: x });
-			}, [title, notes[name]]);
-			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
-			// TW refreshes the story after the store change; wait until its refresh queue has run
+			// Without the plugin's body: this tiddler left out (outline: no; the global setting would reach the tests
+			// of other workers on the same server)
+			await page.evaluate(([t, x]) => $tw.wiki.addTiddler({ title: t, text: x, outline: "no" }), [title, notes[name]]);
 			await settled(page);
 			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
 			const off = await normalizedBody(page, title);
-			await page.evaluate((t) => $tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + t, text: "yes" }), title);
+			// Idle: the wrapper, nothing stamped
+			await page.evaluate(([t, x]) => $tw.wiki.addTiddler({ title: t, text: x }), [title, notes[name]]);
 			await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
-			const on = await normalizedBody(page, title);
-			expect(on, "note " + name).toBe(off);
+			await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(0);
+			expect(await normalizedBody(page, title), "idle note " + name).toBe(off);
+			// Awake
+			await wakeOutline(page, title);
+			expect(await normalizedBody(page, title), "awake note " + name).toBe(off);
+			await page.keyboard.press("Escape");
+			await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(0);
 		}
 	});
 
-	test("toggle off leaves DOM identical", async ({ page, request }) => {
+	test("sleep leaves the DOM as it was before waking", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "! h\n\n* a\n** a1\n* b\n\npara\n\n<$text text=x/>" });
 		await open(page, title);
 		const before = await frameOf(page, title).locator(".tc-tiddler-body").innerHTML();
-		await toggle(page, title);
-		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
-		await toggle(page, title);
-		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
+		await wakeOutline(page, title);
+		await expect(frameOf(page, title).locator("[data-ol-id]").first()).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(0);
 		expect(await frameOf(page, title).locator(".tc-tiddler-body").innerHTML()).toBe(before);
+	});
+
+	test("an idle body has the width of the normal body", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para" });
+		await open(page, title);
+		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+		const idle = await frameOf(page, title).locator(".rr-ol p").evaluate((p) => p.getBoundingClientRect().width);
+		await page.evaluate((t) => $tw.wiki.addTiddler(new $tw.Tiddler($tw.wiki.getTiddler(t), { outline: "no" })), title);
+		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
+		const plain = await frameOf(page, title).locator(".tc-tiddler-body p").evaluate((p) => p.getBoundingClientRect().width);
+		expect(idle).toBe(plain);
 	});
 
 	test("hidden while draft exists", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* b" });
-		await page.goto("/");
-		await waitForTW(page);
-		await page.evaluate((t) => $tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + t, text: "yes" }), title);
-		await navigateToTiddler(page, title);
+		await open(page, title);
 		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
 		await frameOf(page, title).locator('button[aria-label="Edit this tiddler"]').click();
 		const draft = `Draft of '${title}'`;
 		await expect(frameOf(page, draft)).toBeVisible();
-		await expect(frameOf(page, draft).locator('button[aria-label="outline"]')).toHaveCount(0);
-		// outline state on for the draft too: the real body cascade must still not pick the outline template
-		await page.evaluate((d) => $tw.wiki.addTiddler({ title: "$:/state/rimir/outline/on/" + d, text: "yes" }), draft);
 		await expect(frameOf(page, draft).locator(".rr-ol")).toHaveCount(0);
-		await expect(page.locator(".rr-ol")).toHaveCount(0);
 		const cascade = (t) => page.evaluate((x) => $tw.wiki.renderText("text/plain", "text/vnd.tiddlywiki",
 			"<$text text={{{ [<currentTiddler>] :cascade[all[shadows+tiddlers]tag[$:/tags/ViewTemplateBodyFilter]!is[draft]get[text]] }}}/>",
 			{ variables: { currentTiddler: x } }), t);
@@ -128,7 +130,7 @@ test.describe("outline parity", () => {
 		})();
 		await createTiddler(request, title, { text: note });
 		await open(page, title);
-		await toggle(page, title);
+		await wakeOutline(page, title);
 		const units = frameOf(page, title).locator("[data-ol-id]");
 		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
 		const count = await units.count();

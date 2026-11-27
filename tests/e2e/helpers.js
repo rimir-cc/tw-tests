@@ -179,7 +179,15 @@ async function paletteType(page, text) {
 	await page.waitForTimeout(200);
 }
 
+// Wake the outline of an open tiddler: a Ctrl-Click on its outline container itself (no unit gets selected)
+async function wakeOutline(page, title) {
+	const frame = page.locator(`.tc-tiddler-frame[data-tiddler-title="${title.replace(/"/g, '\\"')}"]`).first();
+	await frame.locator(".rr-ol").dispatchEvent("click", { ctrlKey: true, bubbles: true });
+	await frame.locator(".rr-ol.rr-ol-awake").waitFor();
+}
+
 module.exports = {
+	wakeOutline,
 	waitForTW,
 	createTiddler,
 	deleteTiddler,

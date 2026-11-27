@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
-const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler } = require("./helpers");
+const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler, wakeOutline } = require("./helpers");
 
-// Outline mode: in-place editor (Shift-Enter edit, Ctrl-Enter save, Enter save-and-continue,
+// Outline mode: in-place editor (Enter edit, Ctrl-Enter save, Enter save-and-continue,
 // Escape cancel), new units, outside changes while editing, and the transclusion jump.
 // Fixtures are tiddlers named "OLT <test title>". The editor uses the core engines: the compact editor
 // (default, no toolbar) is the SimpleEngine; the full editor ($:/config/rimir/outline/full-editor yes) with the
@@ -9,7 +9,6 @@ const { waitForTW, createTiddler, deleteTiddler, navigateToTiddler } = require("
 // content without the marker.
 // window.__olEngineCalls comes from the test-only plugin pw-edition/plugins/outline-engine-probe.
 
-const STATE_ON = "$:/state/rimir/outline/on/";
 const BUFFER = "$:/temp/rimir/outline/edit/";
 const SELECTION = "$:/temp/rimir/outline/selection/";
 const HELP = "$:/temp/rimir/outline/help/";
@@ -25,10 +24,11 @@ async function open(page, title) {
 	await navigateToTiddler(page, title);
 }
 
+// Open the tiddler and wake its outline (nothing selected)
 async function outlined(page, title) {
 	await open(page, title);
-	await frameOf(page, title).locator('button[aria-label="outline"]').click();
-	await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+	await wakeOutline(page, title);
+	await expect(frameOf(page, title).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
 }
 
 function text(page, title) {
@@ -80,7 +80,7 @@ test.describe("outline edit", () => {
 
 	test.afterEach(async ({ request }) => {
 		expect(pageErrors).toEqual([]);
-		for(const t of [title, STATE_ON + title, BUFFER + title, SELECTION + title, HELP + title].concat(extra)) {
+		for(const t of [title, BUFFER + title, SELECTION + title, HELP + title].concat(extra)) {
 			await deleteTiddler(request, t);
 		}
 	});
@@ -129,7 +129,7 @@ test.describe("outline edit", () => {
 		await expect.poll(() => text(page, title)).toBe("* a\n* bX\n\npara");
 		await expect(hosts(page)).toHaveCount(0);
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveText("bX");
-		await expect(page.locator(".rr-ol")).toBeFocused();
+		await expect(page.locator(".rr-ol.rr-ol-awake")).toBeFocused();
 		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), BUFFER + title)).toBe(false);
 	});
 
@@ -143,7 +143,7 @@ test.describe("outline edit", () => {
 		expect(await text(page, title)).toBe("* a\n* b");
 		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), BUFFER + title)).toBe(false);
 		await expect(frameOf(page, title).locator("li").first()).toBeVisible();
-		await expect(page.locator(".rr-ol")).toBeFocused();
+		await expect(page.locator(".rr-ol.rr-ol-awake")).toBeFocused();
 	});
 
 	test("typing does not write", async ({ page, request }) => {
@@ -543,7 +543,7 @@ test.describe("outline edit", () => {
 		await expect(hosts(page)).toHaveCount(0);
 	});
 
-	test("closing the tiddler keeps the edit, toggling off discards it", async ({ page, request }) => {
+	test("closing the tiddler forgets the edit and the selection: it reopens idle", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* a\n* b" });
 		await outlined(page, title);
 		await editItem(page, title, "b");
@@ -551,17 +551,67 @@ test.describe("outline edit", () => {
 		await page.keyboard.type("X");
 		await frameOf(page, title).locator('button[aria-label="close"]').click();
 		await expect(frameOf(page, title)).toHaveCount(0);
-		await navigateToTiddler(page, title);
-		await expect(hosts(page)).toHaveCount(1);
-		expect(await editorValue(page)).toBe("bX");
-		await frameOf(page, title).locator('button[aria-label="outline"]').click();
-		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(0);
-		await expect(hosts(page)).toHaveCount(0);
 		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), BUFFER + title)).toBe(false);
-		await frameOf(page, title).locator('button[aria-label="outline"]').click();
+		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), SELECTION + title)).toBe(false);
+		await navigateToTiddler(page, title);
 		await expect(frameOf(page, title).locator(".rr-ol")).toHaveCount(1);
+		await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(0);
+		await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(0);
 		await expect(hosts(page)).toHaveCount(0);
 		expect(await text(page, title)).toBe("* a\n* b");
+	});
+
+	test("idle until Ctrl-Click: plain clicks, double-clicks and keys stay plain TiddlyWiki", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "para one\n\n* a\n* b" });
+		await open(page, title);
+		const frame = frameOf(page, title);
+		await expect(frame.locator(".rr-ol")).toHaveCount(1);
+		await expect(frame.locator(".rr-ol-help-button")).toBeHidden();
+		await frame.locator("li", { hasText: "a" }).click();
+		await frame.locator(".rr-ol p").first().dblclick();
+		// The double-click selected a word, as without the plugin
+		expect(await page.evaluate(() => String(window.getSelection()))).not.toBe("");
+		await page.keyboard.press("Enter");
+		await expect(frame.locator("[data-ol-id]")).toHaveCount(0);
+		await expect(frame.locator(".rr-ol-selected")).toHaveCount(0);
+		await expect(hosts(page)).toHaveCount(0);
+		expect(await frame.locator(".rr-ol").getAttribute("tabindex")).toBe(null);
+		// Ctrl-Click wakes and selects the clicked unit
+		await frame.locator("li", { hasText: "b" }).click({ modifiers: ["Control"] });
+		await expect(frame.locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
+		await expect(frame.locator(".rr-ol-selected")).toHaveText("b");
+		await expect(frame.locator(".rr-ol-help-button")).toBeVisible();
+		// Keys work now
+		await page.keyboard.press("ArrowUp");
+		await expect(frame.locator(".rr-ol-selected")).toHaveText("a");
+		// Escape clears the selection, a second Escape puts it to sleep
+		await page.keyboard.press("Escape");
+		await expect(frame.locator(".rr-ol-selected")).toHaveCount(0);
+		await expect(frame.locator(".rr-ol-awake")).toHaveCount(1);
+		await page.keyboard.press("Escape");
+		await expect(frame.locator(".rr-ol-awake")).toHaveCount(0);
+		await expect(frame.locator("[data-ol-id]")).toHaveCount(0);
+	});
+
+	test("a click outside the tiddler puts it to sleep, not while editing", async ({ page, request }) => {
+		const other = title + " other";
+		extra.push(other);
+		await createTiddler(request, other, { text: "other text" });
+		await createTiddler(request, title, { text: "* a\n* b" });
+		await outlined(page, title);
+		await navigateToTiddler(page, other);
+		await clickItem(page, title, "a");
+		await editItem(page, title, "b");
+		await frameOf(page, other).locator("p").first().click();
+		await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(1);
+		await expect(hosts(page)).toHaveCount(1);
+		await frameOf(page, title).locator(".rr-ol-editor-host textarea").focus();
+		await page.keyboard.press("Escape");
+		await expect(hosts(page)).toHaveCount(0);
+		await frameOf(page, other).locator("p").first().click();
+		await expect(frameOf(page, title).locator(".rr-ol-awake")).toHaveCount(0);
+		await expect(frameOf(page, title).locator("[data-ol-id]")).toHaveCount(0);
+		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), SELECTION + title)).toBe(false);
 	});
 
 	test("outside change does not steal the focus", async ({ page, request }) => {
@@ -613,7 +663,7 @@ test.describe("outline edit", () => {
 
 	test("enter on transclusion opens target in outline mode", async ({ page, request }) => {
 		const target = title + " target";
-		extra.push(target, STATE_ON + target);
+		extra.push(target, SELECTION + target);
 		await createTiddler(request, target, { text: "* t1" });
 		await createTiddler(request, title, { text: "* a\n\n{{" + target + "}}" });
 		await outlined(page, title);
@@ -621,14 +671,15 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("ArrowDown");
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveAttribute("data-ol-kind", "transclusion");
 		await page.keyboard.press("Enter");
-		await expect(frameOf(page, target).locator(".rr-ol")).toHaveCount(1);
-		expect(await page.evaluate((t) => $tw.wiki.getTiddlerText(t), STATE_ON + target)).toBe("yes");
+		// The target opens awake, its first unit selected
+		await expect(frameOf(page, target).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
+		await expect(frameOf(page, target).locator(".rr-ol-selected")).toHaveText("t1");
 		expect(await text(page, title)).toBe("* a\n\n{{" + target + "}}");
 	});
 
 	test("marker click opens target", async ({ page, request }) => {
 		const target = title + " target";
-		extra.push(target, STATE_ON + target);
+		extra.push(target, SELECTION + target);
 		await createTiddler(request, target, { text: "* t1" });
 		await createTiddler(request, title, { text: "para\n\n{{" + target + "}}" });
 		await outlined(page, title);
@@ -637,8 +688,7 @@ test.describe("outline edit", () => {
 		// The marker of a transcluded list sits inside its first item, not directly in the <ul>
 		expect(await marker.evaluate((m) => m.parentNode.tagName.toLowerCase())).toBe("li");
 		await marker.click();
-		await expect(frameOf(page, target).locator(".rr-ol")).toHaveCount(1);
-		expect(await page.evaluate((t) => $tw.wiki.getTiddlerText(t), STATE_ON + target)).toBe("yes");
+		await expect(frameOf(page, target).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
 	});
 
 	test("two views of one tiddler", async ({ page, request }) => {
@@ -650,7 +700,8 @@ test.describe("outline edit", () => {
 		});
 		await outlined(page, title);
 		await navigateToTiddler(page, viewer);
-		await expect(page.locator(".rr-ol")).toHaveCount(2);
+		// The viewer's own body wrapper and its explicit outline of the tiddler
+		await expect(frameOf(page, viewer).locator(".rr-ol")).toHaveCount(2);
 		await clickItem(page, title, "b");
 		// The second view shows the selection too
 		await expect(frameOf(page, viewer).locator(".rr-ol-selected")).toHaveText("b");
@@ -712,12 +763,14 @@ test.describe("outline edit", () => {
 		await expect(help).toBeVisible();
 		await help.locator(".rr-ol-help-close").click();
 		await expect(help).toHaveCount(0);
-		// Switching outline mode off closes it for good
+		// Going to sleep (a click outside the tiddler) closes it for good
 		await frame.locator(".rr-ol").focus();
 		await page.keyboard.press("?");
 		await expect(help).toBeVisible();
-		await frame.locator('button[aria-label="outline"]').click();
+		await page.mouse.click(2, 2);
+		await expect(frame.locator(".rr-ol-awake")).toHaveCount(0);
 		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t), HELP + title)).toBe(false);
+		await expect(help).toHaveCount(0);
 	});
 
 	test("double-click edits, Delete asks in the menu", async ({ page, request }) => {
@@ -1153,7 +1206,7 @@ test.describe("outline edit", () => {
 
 	test("ctrl-c/x/v use the system clipboard: html for outside, levels adapted inside, plain text as wikitext", async ({ page, request }) => {
 		const other = title + " other";
-		extra.push(other, STATE_ON + other, SELECTION + other);
+		extra.push(other, SELECTION + other);
 		await createTiddler(request, title, { text: "* a\n** a1 [[L]]\n\n# x\n## y\n\n! H\n\npara\n\n!! S\n\ns" });
 		await createTiddler(request, other, { text: "" });
 		await outlined(page, title);
