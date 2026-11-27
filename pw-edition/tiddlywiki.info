@@ -34,6 +34,8 @@
         "rimir/mindmap",
         "rimir/mindmap-elixir",
         "rimir/outline",
+        "rimir/graphviz",
+        "rimir/mermaid",
         "rimir/knowledge-app"
     ],
     "themes": [

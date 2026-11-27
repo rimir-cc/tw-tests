@@ -457,11 +457,12 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("Alt+Enter");
 		await menu.locator(".rr-ol-menu-item", { hasText: "Paragraph" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n* a\n* b\n** b1");
-		// A bullet: only the list type; numbered switches the siblings, the sub-item keeps its own type
+		// A bullet: insert around it and turn it into anything; numbered switches the siblings, the sub-item keeps its own type
 		await clickItem(page, title, "a");
 		await page.keyboard.press("Alt+Enter");
-		await expect(menu.locator(".rr-ol-menu-item")).toHaveText(["Numbered list"]);
-		await page.keyboard.press("Enter");
+		// (Add to this item: the graphviz plugin's type, loaded in this test wiki)
+		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Add to this item", "Insert after", "Insert before", "Turn into"]);
+		await menu.locator(".rr-ol-menu-item", { hasText: "Numbered list" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n# a\n# b\n#* b1");
 		await expect(frameOf(page, title).locator(".rr-ol ol > li")).toHaveCount(2);
 		await expect(frameOf(page, title).locator(".rr-ol ol ul > li")).toHaveText("b1");
@@ -470,6 +471,37 @@ test.describe("outline edit", () => {
 		await expect(menu).toBeVisible();
 		await frameOf(page, title).locator(".rr-ol p").first().click();
 		await expect(menu).toHaveCount(0);
+	});
+
+	test("block menu: a new first bullet, a quote turned into a paragraph, a new unit retyped", async ({ page, request }) => {
+		await createTiddler(request, title, { text: "! H\n\n* a\n* b\n\n> q" });
+		await outlined(page, title);
+		const menu = frameOf(page, title).locator(".rr-ol-menu");
+		// Insert before the first bullet
+		await clickItem(page, title, "a");
+		await page.keyboard.press("Alt+Enter");
+		await menu.locator(".rr-ol-menu-group", { hasText: "Insert before" }).waitFor();
+		const before = menu.locator(".rr-ol-menu-item", { hasText: "Bulleted list" }).nth(1);
+		await before.click();
+		await page.keyboard.type("first");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\n* first\n* a\n* b\n\n> q");
+		// A quote line turns into a paragraph
+		await frameOf(page, title).locator(".rr-ol blockquote").click();
+		await page.keyboard.press("Alt+Enter");
+		await menu.locator(".rr-ol-menu-item", { hasText: "Paragraph" }).last().click();
+		await expect.poll(() => text(page, title)).toBe("! H\n\n* first\n* a\n* b\n\nq");
+		// Enter on the heading's editor saves it and opens a new paragraph; Alt-Enter while empty retypes it
+		await frameOf(page, title).locator(".rr-ol h1").dblclick();
+		await page.keyboard.press("End");
+		await page.keyboard.press("Enter");
+		await expect(hosts(page).locator("textarea")).toHaveValue("");
+		await page.keyboard.press("Alt+Enter");
+		await menu.locator(".rr-ol-menu-item", { hasText: "Code block" }).click();
+		await expect(menu).toHaveCount(0);
+		await page.keyboard.type("x = 1");
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, title)).toBe("! H\n\n```\nx = 1\n```\n\n* first\n* a\n* b\n\nq");
 	});
 
 	test("block menu on a transclusion: edit the line", async ({ page, request }) => {
