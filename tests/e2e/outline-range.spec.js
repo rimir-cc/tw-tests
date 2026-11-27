@@ -98,12 +98,12 @@ test.describe("outline range", () => {
 		await outlined(page, title);
 		await frameOf(page, title).locator(".rr-ol li").first().click();
 		await expect(frameOf(page, title).locator("li.rr-ol-selected")).toHaveCSS("outline-color", "rgb(232, 128, 12)");
-		// Enter edits the bullet's line, Shift-Enter opens the transcluded tiddler
+		// Enter edits the bullet's line, Shift-Enter opens the transcluded tiddler in an overlay
 		await page.keyboard.press("Enter");
 		await expect(frameOf(page, title).locator(".rr-ol-editor-host textarea")).toHaveValue("{{" + other + "}}");
 		await page.keyboard.press("Escape");
 		await page.keyboard.press("Shift+Enter");
 		extra.push("$:/temp/rimir/outline/selection/" + other);
-		await expect(page.locator(`.tc-tiddler-frame[data-tiddler-title="${other}"] .rr-ol.rr-ol-awake`)).toHaveCount(1);
+		await expect(frameOf(page, title).locator(`.rr-ol-overlay .rr-ol.rr-ol-awake[data-ol-tiddler="${other}"]`)).toHaveCount(1);
 	});
 });

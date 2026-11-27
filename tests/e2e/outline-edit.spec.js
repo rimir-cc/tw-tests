@@ -691,7 +691,7 @@ test.describe("outline edit", () => {
 		expect(await editorValue(page)).toBe("bbX");
 	});
 
-	test("shift-enter on a transclusion opens the target in outline mode", async ({ page, request }) => {
+	test("ctrl-shift-enter on a transclusion opens the target in the story, in outline mode", async ({ page, request }) => {
 		const target = title + " target";
 		extra.push(target, SELECTION + target);
 		await createTiddler(request, target, { text: "* t1" });
@@ -706,7 +706,7 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("ArrowUp");
 		expect(await frameColour(frameOf(page, title).locator(".rr-ol-selected"))).not.toBe("rgb(232, 128, 12)");
 		await page.keyboard.press("ArrowDown");
-		await page.keyboard.press("Shift+Enter");
+		await page.keyboard.press("Control+Shift+Enter");
 		// The target opens awake, its first unit selected
 		await expect(frameOf(page, target).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
 		await expect(frameOf(page, target).locator(".rr-ol-selected")).toHaveText("t1");

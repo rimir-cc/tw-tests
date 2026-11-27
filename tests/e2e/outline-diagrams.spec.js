@@ -73,7 +73,7 @@ test.describe("outline diagrams", () => {
 		await expect.poll(() => text(page, title)).toBe("```\ndigraph { x -> y }\n```");
 	});
 
-	test("add a graph to a bullet: created on the first save; a double-click edits it in place", async ({ page, request }) => {
+	test("add a graph to a bullet: created on the first save; a double-click edits it in an overlay with a live preview", async ({ page, request }) => {
 		const graph = title + "/graphs/graphviz1";
 		extra.push(graph);
 		await createTiddler(request, title, { text: "* Build pipeline\n* b" });
@@ -92,20 +92,26 @@ test.describe("outline diagrams", () => {
 		expect(await page.evaluate((t) => $tw.wiki.getTiddler(t).fields.type, graph)).toBe("text/vnd.graphviz");
 		const svg = frameOf(page, title).locator("li span.rr-gv svg");
 		await expect(svg).toHaveCount(1);
-		// Double-click on the graph: its code in place, with the orange frame; Escape changes nothing
-		await svg.dblclick();
-		await expect(host).toHaveCount(1);
-		await expect(host).toHaveCSS("outline-color", "rgb(232, 128, 12)");
-		await host.locator("textarea").fill("digraph { a -> b -> c }");
-		await page.keyboard.press("Escape");
-		await expect(host).toHaveCount(0);
+		// Double-click on the graph: the overlay with its code and a live preview; Escape changes nothing
+		const svg0 = frameOf(page, title).locator(".rr-ol > ul li span.rr-gv svg");
+		await svg0.dblclick();
+		const overlay = frameOf(page, title).locator(".rr-ol-overlay");
+		await expect(overlay.locator("textarea.rr-ol-overlay-code")).toHaveValue(STARTER);
+		await expect(overlay).toHaveCSS("border-top-color", "rgb(232, 128, 12)");
+		await overlay.locator("textarea").fill("digraph { a -> b -> c }");
+		// The preview follows the typing, the diagram does not change yet
+		await expect(overlay.locator(".rr-ol-overlay-preview svg g.node")).toHaveCount(3);
 		expect(await text(page, graph)).toBe(STARTER);
-		// Saved: the graph re-renders, the bullet stays as it is
-		await svg.dblclick();
-		await host.locator("textarea").fill("digraph { a -> b -> c }");
+		await page.keyboard.press("Escape");
+		await expect(overlay).toHaveCount(0);
+		expect(await text(page, graph)).toBe(STARTER);
+		// Shift-Enter on the bullet opens the same overlay; Ctrl-Enter saves
+		await page.keyboard.press("Shift+Enter");
+		await overlay.locator("textarea").fill("digraph { a -> b -> c }");
 		await page.keyboard.press("Control+Enter");
+		await expect(overlay).toHaveCount(0);
 		await expect.poll(() => text(page, graph)).toBe("digraph { a -> b -> c }");
-		await expect(frameOf(page, title).locator("li span.rr-gv svg g.node")).toHaveCount(3);
+		await expect(frameOf(page, title).locator(".rr-ol > ul li span.rr-gv svg g.node")).toHaveCount(3);
 		expect(await text(page, title)).toBe("* Build pipeline {{" + graph + "}}\n* b");
 	});
 
@@ -134,7 +140,7 @@ test.describe("outline diagrams", () => {
 		await expect(page.locator(`.tc-tiddler-frame[data-tiddler-title="${graph}"]`)).toHaveCount(0);
 	});
 
-	test("a wikitext transclusion holding a graph opens in outline mode, not as a graph", async ({ page, request }) => {
+	test("a wikitext transclusion holding a graph opens in its overlay, not as a graph", async ({ page, request }) => {
 		const notes = title + " notes", graph = title + " graph";
 		extra.push(notes, graph, "$:/temp/rimir/outline/selection/" + notes);
 		await createTiddler(request, graph, { type: "text/vnd.graphviz", text: "digraph { a -> b }" });
@@ -146,7 +152,7 @@ test.describe("outline diagrams", () => {
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("Shift+Enter");
 		await expect(frameOf(page, title).locator(".rr-ol-target-editor")).toHaveCount(0);
-		await expect(frameOf(page, notes).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
+		await expect(frameOf(page, title).locator(`.rr-ol-overlay .rr-ol.rr-ol-awake[data-ol-tiddler="${notes}"]`)).toHaveCount(1);
 	});
 
 	test("a wikitext transclusion in a bullet is not marked", async ({ page, request }) => {
