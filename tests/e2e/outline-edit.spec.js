@@ -670,6 +670,12 @@ test.describe("outline edit", () => {
 		await clickItem(page, title, "a");
 		await page.keyboard.press("ArrowDown");
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveAttribute("data-ol-kind", "transclusion");
+		// A selected transclusion has an orange frame, other units the primary colour
+		const frameColour = (loc) => loc.evaluate((n) => getComputedStyle(n).outlineColor);
+		expect(await frameColour(frameOf(page, title).locator(".rr-ol-selected"))).toBe("rgb(232, 128, 12)");
+		await page.keyboard.press("ArrowUp");
+		expect(await frameColour(frameOf(page, title).locator(".rr-ol-selected"))).not.toBe("rgb(232, 128, 12)");
+		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("Enter");
 		// The target opens awake, its first unit selected
 		await expect(frameOf(page, target).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
