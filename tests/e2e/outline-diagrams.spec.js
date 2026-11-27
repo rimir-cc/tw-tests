@@ -74,7 +74,7 @@ test.describe("outline diagrams", () => {
 	});
 
 	test("add a graph to a bullet: created on the first save; a double-click edits it in place", async ({ page, request }) => {
-		const graph = "Build pipeline (graphviz)";
+		const graph = title + "/graphs/graphviz1";
 		extra.push(graph);
 		await createTiddler(request, title, { text: "* Build pipeline\n* b" });
 		await outlined(page, title);
@@ -120,7 +120,7 @@ test.describe("outline diagrams", () => {
 		await page.keyboard.press("Escape");
 		await expect(frameOf(page, title).locator(".rr-ol-target-editor")).toHaveCount(0);
 		expect(await text(page, title)).toBe("* point\n* b");
-		expect(await page.evaluate(() => $tw.wiki.tiddlerExists("point (graphviz)"))).toBe(false);
+		expect(await page.evaluate((t) => $tw.wiki.tiddlerExists(t + "/graphs/graphviz1"), title)).toBe(false);
 	});
 
 	test("a click on a graph in a bullet selects the bullet and stays in the tiddler", async ({ page, request }) => {
@@ -144,7 +144,7 @@ test.describe("outline diagrams", () => {
 		await expect(frameOf(page, title).locator("[data-ol-diagram-target]")).toHaveCount(0);
 		await frameOf(page, title).locator(".rr-ol p").first().click();
 		await page.keyboard.press("ArrowDown");
-		await page.keyboard.press("Enter");
+		await page.keyboard.press("Shift+Enter");
 		await expect(frameOf(page, title).locator(".rr-ol-target-editor")).toHaveCount(0);
 		await expect(frameOf(page, notes).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
 	});

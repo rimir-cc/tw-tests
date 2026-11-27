@@ -429,7 +429,7 @@ test.describe("outline edit", () => {
 		await frameOf(page, title).locator(".rr-ol p").click();
 		await page.keyboard.press("Alt+Enter");
 		await expect(menu).toBeVisible();
-		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Insert after", "Insert before", "Turn into"]);
+		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Insert after", "Insert before", "Turn into", "More"]);
 		await expect(active).toHaveText("Paragraph");
 		// Below the selected paragraph
 		const pBox = await frameOf(page, title).locator(".rr-ol p").boundingBox();
@@ -461,7 +461,7 @@ test.describe("outline edit", () => {
 		await clickItem(page, title, "a");
 		await page.keyboard.press("Alt+Enter");
 		// (Add to this item: the graphviz plugin's type, loaded in this test wiki)
-		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Add to this item", "Insert after", "Insert before", "Turn into"]);
+		await expect(menu.locator(".rr-ol-menu-group")).toHaveText(["Add to this item", "Insert after", "Insert before", "Turn into", "More"]);
 		await menu.locator(".rr-ol-menu-item", { hasText: "Numbered list" }).last().click();
 		await expect.poll(() => text(page, title)).toBe("para\n\nSub\n\n# a\n# b\n#* b1");
 		await expect(frameOf(page, title).locator(".rr-ol ol > li")).toHaveCount(2);
@@ -504,7 +504,7 @@ test.describe("outline edit", () => {
 		await expect.poll(() => text(page, title)).toBe("! H\n\n```\nx = 1\n```\n\n* first\n* a\n* b\n\nq");
 	});
 
-	test("block menu on a transclusion: edit the line", async ({ page, request }) => {
+	test("enter on a transclusion line edits the line", async ({ page, request }) => {
 		const target = title + " target";
 		extra.push(target);
 		await createTiddler(request, target, { text: "t" });
@@ -513,8 +513,6 @@ test.describe("outline edit", () => {
 		await frameOf(page, title).locator(".rr-ol p").first().click();
 		await page.keyboard.press("ArrowDown");
 		await expect(frameOf(page, title).locator(".rr-ol-selected")).toHaveAttribute("data-ol-kind", "transclusion");
-		await page.keyboard.press("Alt+Enter");
-		await expect(frameOf(page, title).locator(".rr-ol-menu-active")).toHaveText("Edit this line");
 		await page.keyboard.press("Enter");
 		await expect(hosts(page)).toHaveCount(1);
 		expect(await editorValue(page)).toBe("{{" + target + "}}");
@@ -693,7 +691,7 @@ test.describe("outline edit", () => {
 		expect(await editorValue(page)).toBe("bbX");
 	});
 
-	test("enter on transclusion opens target in outline mode", async ({ page, request }) => {
+	test("shift-enter on a transclusion opens the target in outline mode", async ({ page, request }) => {
 		const target = title + " target";
 		extra.push(target, SELECTION + target);
 		await createTiddler(request, target, { text: "* t1" });
@@ -708,7 +706,7 @@ test.describe("outline edit", () => {
 		await page.keyboard.press("ArrowUp");
 		expect(await frameColour(frameOf(page, title).locator(".rr-ol-selected"))).not.toBe("rgb(232, 128, 12)");
 		await page.keyboard.press("ArrowDown");
-		await page.keyboard.press("Enter");
+		await page.keyboard.press("Shift+Enter");
 		// The target opens awake, its first unit selected
 		await expect(frameOf(page, target).locator(".rr-ol.rr-ol-awake")).toHaveCount(1);
 		await expect(frameOf(page, target).locator(".rr-ol-selected")).toHaveText("t1");
