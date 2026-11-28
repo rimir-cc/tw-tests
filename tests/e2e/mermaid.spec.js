@@ -55,4 +55,20 @@ test.describe("mermaid", () => {
 		await expect(frameOf(page, title).locator("div.rr-mm svg")).toHaveCount(1);
 		await expect(frameOf(page, title).locator("li span.rr-mm svg")).toHaveCount(1);
 	});
+
+	test("every shipped example renders", async ({ page }) => {
+		await page.goto("/");
+		await waitForTW(page);
+		const examples = await page.evaluate(() => $tw.wiki.filterTiddlers("[all[shadows+tiddlers]tag[$:/tags/rimir/outline/Snippet]field:for[mermaid]]"));
+		expect(examples.length).toBeGreaterThan(4);
+		for(const example of examples) {
+			const t = title + " " + example.split("/").pop();
+			extra.push(t);
+			await page.evaluate(([t, ex]) => $tw.wiki.addTiddler({title: t, type: "text/vnd.mermaid", text: $tw.wiki.getTiddlerText(ex)}), [t, example]);
+			await navigateToTiddler(page, t);
+			const frame = frameOf(page, t);
+			await expect(frame.locator(".rr-mm svg"), example).toHaveCount(1);
+			await expect(frame.locator(".rr-mm-error"), example).toHaveCount(0);
+		}
+	});
 });

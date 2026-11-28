@@ -115,6 +115,30 @@ test.describe("outline diagrams", () => {
 		expect(await text(page, title)).toBe("* Build pipeline {{" + graph + "}}\n* b");
 	});
 
+	test("the diagram overlay offers the type's examples (replace the code, preview only) and its docs link", async ({ page, request }) => {
+		const graph = title + " graph";
+		extra.push(graph);
+		await createTiddler(request, graph, { type: "text/vnd.graphviz", text: "digraph { a -> b }" });
+		await createTiddler(request, title, { text: "* a {{" + graph + "}}\n* b" });
+		await outlined(page, title);
+		await frameOf(page, title).locator(".rr-ol li").first().click({ position: { x: 5, y: 5 } });
+		await page.keyboard.press("Shift+Enter");
+		const overlay = frameOf(page, title).locator(".rr-ol-overlay");
+		await expect(overlay.locator("a.rr-ol-diagram-docs")).toHaveAttribute("href", "https://graphviz.org/documentation/");
+		const picker = overlay.locator("select.rr-ol-diagram-examples");
+		// (a click on the list moves the focus there; TiddlyWiki does not rewrite a focused text field)
+		await picker.focus();
+		await picker.selectOption({ label: "Colours and shapes" });
+		await expect(overlay.locator("textarea.rr-ol-overlay-code")).toHaveValue(/fillcolor=palegreen/);
+		await expect(overlay.locator(".rr-ol-overlay-preview svg g.node")).toHaveCount(4);
+		// The picker is back on "Examples"; the diagram itself is unchanged until Ctrl-Enter
+		await expect(picker).toHaveValue("");
+		expect(await text(page, graph)).toBe("digraph { a -> b }");
+		await overlay.locator("textarea.rr-ol-overlay-code").focus();
+		await page.keyboard.press("Control+Enter");
+		await expect.poll(() => text(page, graph)).toMatch(/fillcolor=palegreen/);
+	});
+
 	test("escape on a new graph for a bullet creates nothing", async ({ page, request }) => {
 		await createTiddler(request, title, { text: "* point\n* b" });
 		await outlined(page, title);

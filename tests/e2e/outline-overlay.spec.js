@@ -156,6 +156,23 @@ test.describe("outline overlay", () => {
 		await expect.poll(() => page.evaluate(() => window.__clip)).toBe("* t2");
 	});
 
+	test("an overlay starts further right than its parent outline, a nested one further again", async ({ page, request }) => {
+		const inner = title + " inner";
+		extra.push(inner, "$:/temp/rimir/outline/selection/" + inner);
+		await createTiddler(request, inner, { text: "deep" });
+		await createTiddler(request, target, { text: "t\n\n{{" + inner + "}}" });
+		const overlay = await openOverlay(page);
+		const host = frameOf(page, title).locator(".rr-ol").first();
+		const left = (loc) => loc.evaluate((n) => n.getBoundingClientRect().left);
+		expect(await left(overlay)).toBeGreaterThan(await left(host) + 10);
+		// Nested: Shift-Enter on the transclusion inside the overlay
+		await overlay.locator(".rr-ol p", { hasText: "deep" }).click();
+		await page.keyboard.press("Shift+Enter");
+		const nested = overlay.locator(".rr-ol-overlay");
+		await expect(nested).toHaveCount(1);
+		expect(await left(nested)).toBeGreaterThan(await left(overlay.first()) + 10);
+	});
+
 	test("ctrl-shift-enter and the title bar button open the target in the story", async ({ page }) => {
 		const overlay = await openOverlay(page);
 		await overlay.locator("[data-ol-overlay-action=story]").click();
